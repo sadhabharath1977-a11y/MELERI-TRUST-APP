@@ -23,7 +23,8 @@ async function handleCredential(response){
  try{
   const r=await fetch("/api/verify-access",{
    method:"POST",
-   headers:{"Content-Type":"application/json"},
+   cache:"no-store",
+   headers:{"Content-Type":"application/json","Cache-Control":"no-cache"},
    body:JSON.stringify({idToken:response.credential})
   });
   const data=await r.json();
@@ -37,18 +38,36 @@ async function handleCredential(response){
   err.textContent=t("சரிபார்க்க முடியவில்லை. இணைய இணைப்பை சரிபார்த்து மீண்டும் முயற்சிக்கவும்.","Could not verify. Check your internet connection and try again.");
  }
 }
-function auth(){
+async function auth(){
  const lock=$("#lock");
  const session=getSession();
- if(session&&session.email){
-  lock.classList.add("hidden");
-  window.scrollTo(0,0);
-  renderUserChip(session);
-  loadTrustees(session);
-  if(session.isAdmin)renderAdminPanel(session);
-  return;
+ if(session&&session.email&&session.idToken){
+  // Re-verify the saved Google token on every page load. This keeps a stale or
+  // expired browser session from bypassing the server-side access list.
+  try{
+   const r=await fetch("/api/verify-access",{
+    method:"POST",
+    cache:"no-store",
+    headers:{"Content-Type":"application/json","Cache-Control":"no-cache"},
+    body:JSON.stringify({idToken:session.idToken})
+   });
+   const data=await r.json();
+   if(r.ok&&data.allowed){
+    const fresh={email:data.email,isAdmin:!!data.isAdmin,idToken:session.idToken};
+    sessionStorage.setItem("meleri_auth",JSON.stringify(fresh));
+    lock.classList.add("hidden");
+    window.scrollTo(0,0);
+    renderUserChip(fresh);
+    loadTrustees(fresh);
+    if(fresh.isAdmin)renderAdminPanel(fresh);
+    return;
+   }
+  }catch(e){}
+  sessionStorage.removeItem("meleri_auth");
+ }else{
+  sessionStorage.removeItem("meleri_auth");
  }
- sessionStorage.removeItem("meleri_auth");
+ lock.classList.remove("hidden");
  renderGoogleButton(0);
 }
 function renderGoogleButton(attempt){
