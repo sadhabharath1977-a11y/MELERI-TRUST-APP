@@ -26,29 +26,48 @@ async function handleCredential(response){
    headers:{"Content-Type":"application/json"},
    body:JSON.stringify({idToken:response.credential})
   });
-  const data=await r.json();
-  if(data.allowed){
+  const data=await r.json().catch(()=>({}));
+  if(r.ok&&data.allowed){
    grantAccess({email:data.email,isAdmin:!!data.isAdmin,idToken:response.credential});
+  }else if(r.status===401){
+   err.textContent=t("Google உள்நுழைவு காலாவதியாகியுள்ளது. மீண்டும் முயற்சிக்கவும்.","Google sign-in expired. Please try again.");
+  }else if(data.email){
+   err.textContent=t("இந்த Google account ("+data.email+")-க்கு அனுமதி இல்லை.","This Google account ("+data.email+") is not permitted.");
   }else{
-   const who=data.email?" ("+data.email+")":"";
-   err.textContent=t("இந்த Google account"+who+"-க்கு அனுமதி இல்லை.","This Google account"+who+" is not permitted.");
+   err.textContent=t("சேவையக சரிபார்ப்பு பிரச்சனை. Vercel deployment/configuration-ஐ சரிபார்க்கவும்.","Server verification problem. Check the Vercel deployment/configuration.");
   }
  }catch(e){
   err.textContent=t("சரிபார்க்க முடியவில்லை. இணைய இணைப்பை சரிபார்த்து மீண்டும் முயற்சிக்கவும்.","Could not verify. Check your internet connection and try again.");
  }
 }
-function auth(){
+async function auth(){
  const lock=$("#lock");
  const session=getSession();
- if(session&&session.email){
-  lock.classList.add("hidden");
-  window.scrollTo(0,0);
-  renderUserChip(session);
-  loadTrustees(session);
-  if(session.isAdmin)renderAdminPanel(session);
-  return;
+ if(session&&session.email&&session.idToken){
+  try{
+   const r=await fetch("/api/verify-access",{
+    method:"POST",
+    headers:{"Content-Type":"application/json","Cache-Control":"no-cache"},
+    cache:"no-store",
+    body:JSON.stringify({idToken:session.idToken})
+   });
+   const data=await r.json();
+   if(r.ok&&data.allowed){
+    const fresh={email:data.email,isAdmin:!!data.isAdmin,idToken:session.idToken};
+    sessionStorage.setItem("meleri_auth",JSON.stringify(fresh));
+    lock.classList.add("hidden");
+    window.scrollTo(0,0);
+    renderUserChip(fresh);
+    loadTrustees(fresh);
+    if(fresh.isAdmin)renderAdminPanel(fresh);
+    return;
+   }
+  }catch(e){}
+  sessionStorage.removeItem("meleri_auth");
+ }else{
+  sessionStorage.removeItem("meleri_auth");
  }
- sessionStorage.removeItem("meleri_auth");
+ lock.classList.remove("hidden");
  renderGoogleButton(0);
 }
 function renderGoogleButton(attempt){
