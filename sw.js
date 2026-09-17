@@ -1,4 +1,4 @@
-const CACHE='meleri-trust-v16';
+const CACHE='meleri-trust-v15';
 const ASSETS=['./','./index.html','./style.css','./app.js','./manifest.json','./icon-192.png','./icon-512.png','./maharishi.jpg'];
 
 self.addEventListener('install',e=>{

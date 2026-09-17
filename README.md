@@ -1,15 +1,19 @@
-# MELERI MVKM TRUST – Secured App
+# MELERI MVKM TRUST — Trustees App
 
-This package is ready to upload to a GitHub repository and connect to the existing Vercel project.
+Static PWA + Vercel serverless API for the trust's internal trustees app.
 
-## Important
-- Keep all files in the repository root as provided.
-- The Google Sign-In client ID is configured in `app.js`.
-- Vercel serverless functions are under `api/`.
-- Do not commit private secrets or `.env` files.
+Live: https://anbu-mvkm-trust-omega.vercel.app
 
-## Vercel
-Connect this GitHub repository to the existing `anbu-mvkm-trust` Vercel project. A push to the production branch can trigger a new deployment.
+## Structure
+- `index.html`, `app.js`, `style.css`, `sw.js`, `manifest.json` — the static app (bilingual Tamil/English, Google Sign-In gated)
+- `api/verify-access.js` — verifies a signed-in Google account against the allowed-member list
+- `api/admin-emails.js` — admin-only: add/remove members from the allowed list
+- `api/trustees.js` — returns trustee contact details (name, phone, WhatsApp, Drive folder) **only** after a verified login — this data is not present anywhere in the static files
+- `api/_lib/` — shared server-only helpers (Google token verification, the Blob-backed member-list store, admin email config)
 
-## Security update
-The Content Security Policy includes the Google Identity Services endpoints required for the Sign in with Google button. This fixes the sign-in button being blocked after the stricter security headers were added.
+## Deployment
+This repo is **not currently connected** to the Vercel project (`anbu-mvkm-trust`). Deploys are pushed directly from a local machine via the Vercel CLI. This repo exists as a source-controlled mirror of what's live.
+
+## Notes
+- The allowed-member email list and admin flag live in a Vercel Blob store, not in this repo.
+- Do not commit `.env` files or any Vercel API tokens.
