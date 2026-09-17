@@ -23,16 +23,18 @@ async function handleCredential(response){
  try{
   const r=await fetch("/api/verify-access",{
    method:"POST",
-   cache:"no-store",
-   headers:{"Content-Type":"application/json","Cache-Control":"no-cache"},
+   headers:{"Content-Type":"application/json"},
    body:JSON.stringify({idToken:response.credential})
   });
-  const data=await r.json();
-  if(data.allowed){
+  const data=await r.json().catch(()=>({}));
+  if(r.ok&&data.allowed){
    grantAccess({email:data.email,isAdmin:!!data.isAdmin,idToken:response.credential});
+  }else if(r.status===401){
+   err.textContent=t("Google உள்நுழைவு காலாவதியாகியுள்ளது. மீண்டும் முயற்சிக்கவும்.","Google sign-in expired. Please try again.");
+  }else if(data.email){
+   err.textContent=t("இந்த Google account ("+data.email+")-க்கு அனுமதி இல்லை.","This Google account ("+data.email+") is not permitted.");
   }else{
-   const who=data.email?" ("+data.email+")":"";
-   err.textContent=t("இந்த Google account"+who+"-க்கு அனுமதி இல்லை.","This Google account"+who+" is not permitted.");
+   err.textContent=t("சேவையக சரிபார்ப்பு பிரச்சனை. Vercel deployment/configuration-ஐ சரிபார்க்கவும்.","Server verification problem. Check the Vercel deployment/configuration.");
   }
  }catch(e){
   err.textContent=t("சரிபார்க்க முடியவில்லை. இணைய இணைப்பை சரிபார்த்து மீண்டும் முயற்சிக்கவும்.","Could not verify. Check your internet connection and try again.");
@@ -42,13 +44,11 @@ async function auth(){
  const lock=$("#lock");
  const session=getSession();
  if(session&&session.email&&session.idToken){
-  // Re-verify the saved Google token on every page load. This keeps a stale or
-  // expired browser session from bypassing the server-side access list.
   try{
    const r=await fetch("/api/verify-access",{
     method:"POST",
-    cache:"no-store",
     headers:{"Content-Type":"application/json","Cache-Control":"no-cache"},
+    cache:"no-store",
     body:JSON.stringify({idToken:session.idToken})
    });
    const data=await r.json();
