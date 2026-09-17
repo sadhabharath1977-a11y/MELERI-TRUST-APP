@@ -1,0 +1,31 @@
+ANBU / MELERI MVKM TRUST - SIMPLE FIXED-LIST LOGIN VERSION
+
+இந்த version-ல் Vercel Blob store எதுவும் தேவையில்லை.
+கீழே கொடுக்கப்பட்ட 12 Gmail ID-கள் மட்டும் login ஆக முடியும்:
+
+1. vivekanandanb1963@gmail.com
+2. venuthami@gmail.com
+3. vayyapurim@gmail.com
+4. umayoga2019@gmail.com
+5. narayanan1982v@gmail.com
+6. thangaraj9687@gmail.com
+7. venkatesanvvv1987@gmail.com
+8. muraliprabhuranji@gmail.com
+9. jmk20786@gmail.com
+10. menakaiarul2@gmail.com
+11. vsbfinesolutions@gmail.com
+12. meleriskyyoga262@gmail.com (Admin)
+
+இந்த list api/_lib/store.js file-ல் நேரடியாக code-ல் எழுதப்பட்டுள்ளது.
+Blob read/write இல்லாததால் "server verification problem" வராது.
+
+புதிதாக ஒருவரை சேர்க்க / நீக்க வேண்டுமென்றால்:
+1. GitHub-ல் api/_lib/store.js file-ஐ திற
+2. ALLOWED_EMAILS பட்டியலில் email-ஐ சேர்க்க/நீக்க
+3. Commit செய்யவும் - Vercel தானாக redeploy ஆகும்
+
+Deploy படிகள்:
+1. இந்த ZIP-ல் உள்ள எல்லா files-ஐயும் GitHub repo-வில் replace/upload செய்யவும்
+   (குறைந்தபட்சம் api/_lib/store.js கண்டிப்பாக replace ஆக வேண்டும்)
+2. Vercel தானாக deploy செய்யும்
+3. Google Sign-in மூலமாக மட்டும் மேலே உள்ள 12 emails login ஆக முடியும்
