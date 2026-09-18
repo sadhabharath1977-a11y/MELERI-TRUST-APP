@@ -22,7 +22,7 @@
   --radius:20px;
 }
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-html,body{height:100%;overflow:hidden}
+html,body{height:100%;overflow:hidden;background:#0d5c3a}
 body{
   margin:0;background:var(--bg);color:var(--ink);
   font-family:"Noto Sans Tamil","Poppins",system-ui,-apple-system,sans-serif;
@@ -32,7 +32,7 @@ a{text-decoration:none;color:inherit}
 button{font-family:inherit}
 ::selection{background:var(--green-100);color:var(--green-900)}
 
-.app{max-width:520px;margin:auto;height:100vh;height:100dvh;position:relative;display:flex;flex-direction:column}
+.app{max-width:520px;margin:auto;background:var(--bg);height:100vh;height:100dvh;position:relative;display:flex;flex-direction:column}
 
 /* ===== HEADER ===== */
 .top{
