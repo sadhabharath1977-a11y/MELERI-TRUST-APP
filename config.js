@@ -1,10 +1,7 @@
 // Single source of truth for the admin email.
-const ADMIN_EMAIL = String(process.env.ADMIN_EMAIL || 'meleriskyyoga262@gmail.com').trim().toLowerCase();
+// You can override this without touching code by setting an
+// ADMIN_EMAIL environment variable in your Vercel project settings.
+// If you don't set one, it falls back to the value below (same as before).
+const ADMIN_EMAIL = (process.env.ADMIN_EMAIL || "meleriskyyoga262@gmail.com").toLowerCase();
 
-function noStore(res) {
-  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0');
-  res.setHeader('Pragma', 'no-cache');
-  res.setHeader('Expires', '0');
-}
-
-module.exports = { ADMIN_EMAIL, noStore };
+module.exports = { ADMIN_EMAIL };
