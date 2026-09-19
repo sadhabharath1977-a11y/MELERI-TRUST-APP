@@ -256,20 +256,23 @@ function showToast(msg){
  t._hideTimer=setTimeout(()=>t.classList.remove("show"),3200);
 }
 function dashboardGate(){
+ const SHEETS_URL="https://docs.google.com/spreadsheets/d/14f0UnOMQLSvfQYN1BHwrJolr9F8rl3BebwMiEon5egM/edit?usp=drivesdk";
+ const SHEETS_INTENT="intent://docs.google.com/spreadsheets/d/14f0UnOMQLSvfQYN1BHwrJolr9F8rl3BebwMiEon5egM/edit?usp=drivesdk#Intent;scheme=https;package=com.google.android.apps.docs.editors.sheets;end";
  document.querySelectorAll(".dash-link").forEach(link=>{
   link.addEventListener("click",e=>{
    e.preventDefault();
-   const url=link.href;
    fetch(DASH_STATUS_URL+"&_="+Date.now(),{cache:"no-store"})
     .then(r=>r.text())
     .then(t=>{
      if(t.trim().toUpperCase().startsWith("OFF")){
       showToast(curLang()==="en"?"Accounts are being updated right now. Please try again shortly.":"தற்போது கணக்கு Update ஆகிறது. சிறிது நேரம் கழித்து முயற்சிக்கவும்.");
      } else {
-      window.open(url,"_blank");
+      // Android: open the installed Google Sheets app directly.
+      // This avoids opening the spreadsheet in the browser/WebView first.
+      window.location.href=SHEETS_INTENT;
      }
     })
-    .catch(()=>window.open(url,"_blank"));
+    .catch(()=>{ window.location.href=SHEETS_INTENT; });
   });
  });
 }
