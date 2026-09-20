@@ -1,36 +1,120 @@
-<!doctype html><html lang="ta"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#126b45"><style>html,body{margin:0;width:100%;height:100%;background:#0d5c3a!important;color-scheme:dark}.lock{position:fixed;inset:0;width:100%;height:100%;z-index:100;padding:24px;overflow-y:auto;box-sizing:border-box;background:radial-gradient(circle at 18% 15%,rgba(224,166,54,.35),transparent 45%),radial-gradient(circle at 85% 85%,rgba(36,165,106,.35),transparent 45%),linear-gradient(150deg,#083a26,#0d5c3a 55%,#188a58)}.lockbox{width:min(380px,100%);background:rgba(255,255,255,.97);border-radius:30px;padding:34px 26px 28px;text-align:center;margin:8vh auto}</style><meta name="apple-mobile-web-app-capable" content="yes"><link rel="manifest" href="manifest.json"><link rel="apple-touch-icon" href="icon-180.png"><title>MELERI MVKM TRUST</title><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link rel="stylesheet" href="style.css"><script src="https://accounts.google.com/gsi/client" async defer></script></head><body><div id="lock" class="lock"><div class="lockbox"><img src="maharishi.jpg"><h2>MELERI MVKM TRUSTEES</h2><p>Trustees Internal Use Only</p><div id="gsiBtn" class="gsiBtn"></div><div id="err" class="err"></div></div></div><div class="app"><header class="top"><div class="topbar"><div class="brand"><img src="maharishi.jpg"><div><b>MELERI MVKM TRUST</b><small>Trustees Internal App</small></div></div><div class="top-actions"><div id="userChip" class="user-chip hidden"></div><button id="langToggle" class="top-icon lang-toggle" type="button">EN</button><button class="top-icon" onclick="location.hash='more'">⚙</button></div></div></header><section id="home" class="page active"><div class="hero"><h1 data-en="Welcome 🙏">வணக்கம் 🙏</h1><p data-en="All key facilities for trustees, in one place.">அறங்காவலர்களுக்கான ஒரே இடத்தில் அனைத்து முக்கிய வசதிகளும்.</p></div><div class="quote" data-en="&ldquo;Think and act for your own good and for society&rsquo;s good &mdash; that is an eternal duty.&rdquo;">“உனக்கும் நல்லதாய், ஊருக்கும் நல்லதாய் நினைப்பதும் செய்வதும் நித்தியகடன்.”</div><div class="section"><div class="section-title"><h2 data-en="⚡ Quick Access">⚡ விரைவு அணுகல்</h2><span>Quick Access</span></div><div class="grid">
-<a class="tile" href="https://drive.google.com/drive/folders/1eLcZx1fMzgcozdw0IvshjmqaG9T6MiM9" target="_blank"><div class="ico">📁</div><div><b data-en="Common Documents">பொதுவான ஆவணங்கள்</b><small>Shared Drive Folder</small></div></a>
-<a class="tile" href="https://drive.google.com/drive/folders/1vj8X5IcS6bbGBBLSUJ51_5xOvjDorqbW" target="_blank"><div class="ico">📝</div><div><b data-en="Meeting Notes">கூட்ட குறிப்புகள்</b><small>Meeting Notes</small></div></a>
-<a class="tile dash-link" href="https://docs.google.com/spreadsheets/d/14f0UnOMQLSvfQYN1BHwrJolr9F8rl3BebwMiEon5egM/edit?usp=drivesdk"><div class="ico">📊</div><div><b data-en="Dashboard">டாஷ்போர்டு</b><small>Dashboard</small></div></a>
-<a class="tile" href="https://docs.google.com/forms/d/1qaLqBHhTSxRZm6v9Ll-QL4T7AFtEM8zP9L76XUbuFGs/viewform" target="_blank"><div class="ico">📋</div><div><b data-en="Online Admission">ஆன்லைன் அட்மிஷன்</b><small>Admission Form</small></div></a>
-</div></div><div class="section"><div class="section-title"><h2 data-en="🧭 Main Sections">🧭 முக்கிய பகுதிகள்</h2></div><div class="list">
-<a class="row" href="#accounts" data-page="accounts"><div class="ico">₹</div><div><b data-en="Income &amp; Expense Accounts">வரவு செலவு கணக்கு</b><small>Income / Expense Entry</small></div><span class="go">›</span></a>
-<a class="row" href="#trustees" data-page="trustees"><div class="ico">👥</div><div><b data-en="Trustees">அறங்காவலர்கள்</b><small>Contacts, Folder, WhatsApp, Call</small></div><span class="go">›</span></a>
-<a class="row" href="#service" data-page="service"><div class="ico">✨</div><div><b data-en="Service Details">சேவை விவரம்</b><small>Trust Service Statistics</small></div><span class="go">›</span></a>
-<a class="row" href="#contacts" data-page="contacts"><div class="ico">📞</div><div><b data-en="Important Contacts &amp; Links">முக்கிய தொடர்புகள் &amp; இணைப்புகள்</b><small>Call, Email, Links</small></div><span class="go">›</span></a>
-</div></div></section><section id="trustees" class="page"><div class="hero"><h1 data-en="Trustees 👥">அறங்காவலர்கள் 👥</h1><p data-en="Folder, WhatsApp and Call access for each member.">ஒவ்வொருவரின் Folder, WhatsApp மற்றும் Call வசதி.</p></div><div class="search"><input id="memberSearch" placeholder="பெயரை தேடுங்கள்…" data-en-ph="Search by name…"></div><div class="section"><div class="profile-grid" id="memberGrid"><div class="row"><small>Loading…</small></div></div></div></section><section id="accounts" class="page"><div class="hero"><h1 data-en="Accounts Center ₹">கணக்கு மையம் ₹</h1><p data-en="Quick access to income-expense entry and quarterly reports.">வரவு செலவு பதிவு மற்றும் காலாண்டு அறிக்கைகளுக்கான விரைவு அணுகல்.</p></div><div class="section"><div class="list">
-<a class="row" href="https://docs.google.com/forms/d/e/1FAIpQLSenlGdJSJFREnT90Tm5Y0nBfQqgIQ3oM7QmAeoNe_I3affLWA/viewform?usp=sharing&ouid=115837768816911449489" target="_blank"><div class="ico">➕</div><div><b data-en="Income - Expense Entry">வரவு செலவு பதிவு</b><small>Income – Expense Entry Form</small></div><span class="go">›</span></a>
-<a class="row" href="https://wcscpoornam.vethathiriskyyoga.com/" target="_blank"><div class="ico">📑</div><div><b data-en="Zone Quarterly Accounts">ஜோன் காலாண்டு கணக்கு</b><small>Quarterly Report</small></div><span class="go">›</span></a>
-<a class="row dash-link" href="https://docs.google.com/spreadsheets/d/14f0UnOMQLSvfQYN1BHwrJolr9F8rl3BebwMiEon5egM/edit?usp=drivesdk"><div class="ico">📊</div><div><b data-en="Dashboard">டாஷ்போர்டு</b><small>Financial Dashboard</small></div></a>
-</div></div><div class="quote" data-en="🔐 Account-related links are for trustees' internal use only.">🔐 கணக்கு தொடர்பான இணைப்புகள் அறங்காவலர்களின் உள் பயன்பாட்டிற்காக.</div></section><section id="service" class="page"><div class="hero"><h1 data-en="Service Details ✨">சேவை விவரம் ✨</h1><p data-en="Statistics of the trust's spiritual service activities.">அறக்கட்டளையின் ஆன்மீக சேவைப் பணிகளின் புள்ளிவிவரம்.</p></div><div class="section"><div class="section-title"><h2 data-en="📜 Service So Far">📜 இதுவரையிலான சேவை</h2><span>Cumulative</span></div><div class="stat-grid" id="svcTotal"><div class="stat-card skeleton"></div><div class="stat-card skeleton"></div><div class="stat-card skeleton"></div><div class="stat-card skeleton"></div></div></div><div class="section"><div class="section-title"><h2 data-en="📅 Current Year Service">📅 நடப்பாண்டு சேவை</h2><span>Current Year</span></div><div class="stat-grid" id="svcYear"><div class="stat-card skeleton"></div><div class="stat-card skeleton"></div><div class="stat-card skeleton"></div><div class="stat-card skeleton"></div></div></div><div class="quote" id="svcNote" data-en="✨ Service continues by the Guru's grace. (Figures shown in Tamil, from the shared sheet.)">✨ குருவின் அருளால் தொடரும் சேவை.</div></section><section id="contacts" class="page"><div class="hero"><h1 data-en="Important Contacts &amp; Links 📞">முக்கிய தொடர்புகள் &amp; இணைப்புகள் 📞</h1><p data-en="Tap a number to call directly, an email to open your mail app, or a link to open that page.">எண்ணைத் தொட்டால் நேரடியாக அழைப்பு செல்லும்; மின்னஞ்சலைத் தொட்டால் உங்கள் மெயில் பயன்பாடு திறக்கும்; இணைப்பைத் தொட்டால் அந்தப் பக்கம் திறக்கும்.</p></div><div class="section"><div class="section-title"><h2 data-en="📞 Phone Numbers">📞 தொலைபேசி எண்கள்</h2><span>Tap to Call</span></div><div class="list">
-<a class="row" href="tel:+919994930378"><div class="ico">📞</div><div><b data-en="Vethathiri Pathippagam">வேதாத்திரி பதிப்பகம்</b><small>99949 30378</small></div><span class="go">›</span></a>
-<a class="row" href="tel:+918838074336"><div class="ico">📞</div><div><b data-en="TRL Zone EO">TRL ஜோன் EO</b><small>88380 74336</small></div><span class="go">›</span></a>
-<a class="row" href="tel:+917904402887"><div class="ico">📞</div><div><b data-en="WCSC Head Office">WCSC தலைமை அலுவலகம்</b><small>79044 02887</small></div><span class="go">›</span></a>
-<a class="row" href="tel:+916379282565"><div class="ico">📞</div><div><b data-en="Aliyar Course Booking">அளியார் கோர்ஸ் புக்கிங்</b><small>63792 82565</small></div><span class="go">›</span></a>
-<a class="row" href="tel:+917598238733"><div class="ico">📞</div><div><b data-en="Aliyar Office">அளியார் அலுவலகம்</b><small>07598 238733</small></div><span class="go">›</span></a>
-<a class="row" href="tel:+919488947444"><div class="ico">📞</div><div><b data-en="Smart Office">ஸ்மார்ட் அலுவலகம்</b><small>94889 47444</small></div><span class="go">›</span></a>
-<a class="row" href="tel:+919442124234"><div class="ico">📞</div><div><b data-en="Vision Office">விஷன் அலுவலகம்</b><small>94421 24234</small></div><span class="go">›</span></a>
-<a class="row" href="tel:+918903488633"><div class="ico">📞</div><div><b data-en="Aliyar IT Office">அளியார் IT அலுவலகம்</b><small>89034 88633</small></div><span class="go">›</span></a>
-</div></div><div class="section"><div class="section-title"><h2 data-en="📧 Emails">📧 மின்னஞ்சல்கள்</h2><span>Tap to Email</span></div><div class="list">
-<a class="row" href="mailto:wcscthiruvallurzone@vethathiri.ac.in"><div class="ico">📧</div><div><b data-en="Thiruvallur Zone">திருவள்ளூர் ஜோன்</b><small>wcscthiruvallurzone@vethathiri.ac.in</small></div><span class="go">›</span></a>
-<a class="row" href="mailto:aoaliyar@vethathiri.ac.in"><div class="ico">📧</div><div><b data-en="Aliyar Office">அளியார் அலுவலகம்</b><small>aoaliyar@vethathiri.ac.in</small></div><span class="go">›</span></a>
-<a class="row" href="mailto:visionacademy@vethathiri.ac.in"><div class="ico">📧</div><div><b data-en="Vision Aliyar">விஷன் அளியார்</b><small>visionacademy@vethathiri.ac.in</small></div><span class="go">›</span></a>
-</div></div><div class="section"><div class="section-title"><h2 data-en="🔗 Important Links">🔗 முக்கிய இணைப்புகள்</h2><span>Tap to Open</span></div><div class="list">
-<a class="row" href="https://manuals.plus/m/85430e3dd5dce35db29e00d5082bba1f204678f82d55c7ef9305a1ed49f43ec9" target="_blank"><div class="ico">📅</div><div><b data-en="Year Planner - Arivuthirukoil, Aliyar">Year Planner - அறிவுத் திருக்கோயில், அளியார்</b><small>Open Page</small></div><span class="go">›</span></a>
-<a class="row" href="https://www.vethathiri.edu.in/pages/forms" target="_blank"><div class="ico">📄</div><div><b data-en="Smart Forms">ஸ்மார்ட் படிவங்கள்</b><small>Open Page</small></div><span class="go">›</span></a>
-</div></div><div class="quote" data-en="📌 Phone numbers dial directly, emails open your mail app, and links open right within this app.">📌 எண்களைத் தொட்டால் நேரடியாக அழைப்பு செல்லும்; மின்னஞ்சலைத் தொட்டால் உங்கள் மெயில் பயன்பாடு திறக்கும்; இணைப்பைத் தொட்டால் அந்தப் பக்கம் இந்த ஆப்பிலேயே திறக்கும்.</div></section><section id="more" class="page"><div class="hero"><h1 data-en="More ☰">மேலும் ☰</h1><p data-en="Other important links of the trust.">அறக்கட்டளையின் பிற முக்கிய இணைப்புகள்.</p></div><div class="section"><div class="list">
-<a class="row" href="https://chat.whatsapp.com/FZW3r2FpF3YL75mOniOW9h?s=sh&p=a&mlu=4&ilr=4" target="_blank"><div class="ico">💬</div><div><b data-en="Trust WhatsApp Group">அறக்கட்டளை WhatsApp குரூப்</b><small>Group Communication</small></div><span class="go">›</span></a>
-<a class="row" href="https://meleriskyyoga.netlify.app/" target="_blank"><div class="ico">🌐</div><div><b data-en="Our Website">எங்கள் இணையதளம்</b><small>Our Website</small></div><span class="go">›</span></a>
-<a class="row" href="#contacts" data-page="contacts"><div class="ico">📞</div><div><b data-en="Important Contacts &amp; Links">முக்கிய தொடர்புகள் &amp; இணைப்புகள்</b><small>Call, Email, Links</small></div><span class="go">›</span></a>
-<div class="row"><div class="ico">🔒</div><div><b>Trustees Internal Use Only</b><small data-en="This app is for trustees' internal use only.">இந்த App அறங்காவலர்களின் உள் பயன்பாட்டிற்காக.</small></div><span class="badge">PRIVATE</span></div>
-</div></div><div id="adminPanel" class="section hidden"></div><div class="quote">MELERI MVKM TRUST • Trustees App<br><small>App-style multi-page navigation • Mobile friendly • PWA ready</small></div></section><nav class="bottom"><button class="nav" data-page="home"><span>⌂</span><span data-en="Home">முகப்பு</span></button><button class="nav" data-page="trustees"><span>👥</span><span data-en="Trustees">அறங்காவலர்கள்</span></button><button class="nav" data-page="accounts"><span>₹</span><span data-en="Accounts">கணக்கு</span></button><button class="nav" data-page="contacts"><span>📞</span><span data-en="Contacts">தொடர்புகள்</span></button><button class="nav" data-page="more"><span>☰</span><span data-en="More">மேலும்</span></button></nav></div></body><script src="app.js"></script><script>document.addEventListener("DOMContentLoaded",()=>{const s=document.getElementById("memberSearch");if(s){s.addEventListener("input",()=>{const q=s.value.toLowerCase();document.querySelectorAll("#memberGrid .profile").forEach(c=>c.style.display=c.innerText.toLowerCase().includes(q)?"":"none")})}})</script></html><script>if("serviceWorker" in navigator){let refreshed=false;navigator.serviceWorker.addEventListener("controllerchange",()=>{if(refreshed)return;refreshed=true;location.reload();});navigator.serviceWorker.register("./sw.js").catch(()=>{});}</script>
+<!doctype html>
+<html lang="ta">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#126b45">
+<meta name="robots" content="noindex,nofollow">
+<meta name="google-client-id" content="323362878068-gpr8osss81v1t2qv85ffedmca7dld54u.apps.googleusercontent.com">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>MELERI MVKM TRUST</title>
+<link rel="manifest" href="/manifest.json">
+<link rel="icon" type="image/png" sizes="32x32" href="/icons/icon-32.png">
+<link rel="apple-touch-icon" href="/icons/icon-180.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+Tamil:wght@400;600;700;800&amp;family=Poppins:wght@600;700&amp;display=swap">
+<link rel="stylesheet" href="/style.css">
+<link rel="modulepreload" href="/js/main.js">
+<link rel="modulepreload" href="/js/util.js">
+<link rel="modulepreload" href="/js/i18n.js">
+<link rel="modulepreload" href="/js/api.js">
+<link rel="modulepreload" href="/js/auth.js">
+<link rel="modulepreload" href="/js/views.js">
+<link rel="modulepreload" href="/js/stats.js">
+</head>
+<body>
+
+<div id="lock" class="lock">
+  <div class="lockbox">
+    <img src="/img/maharishi-f9caabf2da.webp" width="92" height="92" alt="">
+    <h2>MELERI MVKM TRUSTEES</h2>
+    <p>Trustees Internal Use Only</p>
+    <div id="lockChecking" class="checking"><span class="spinner"></span><span data-en="Verifying…">சரிபார்க்கிறது…</span></div>
+    <div id="gsiBtn" class="gsiBtn hidden"></div>
+    <div id="err" class="err" role="alert"></div>
+    <button id="retryBtn" class="unlock hidden" type="button" data-en="Try again">மீண்டும் முயற்சி</button>
+  </div>
+</div>
+
+<div class="app">
+<header class="top"><div class="topbar">
+  <div class="brand"><img src="/img/maharishi-f9caabf2da.webp" width="48" height="48" alt=""><div><b>MELERI MVKM TRUST</b><small>Trustees Internal App</small></div></div>
+  <div class="top-actions">
+    <div id="userChip" class="user-chip hidden"></div>
+    <button id="langToggle" class="top-icon lang-toggle" type="button" aria-label="Language">EN</button>
+    <button class="top-icon" type="button" data-page="more" aria-label="More">⚙</button>
+  </div>
+</div></header>
+
+<section id="home" class="page active">
+  <div class="hero"><h1 data-en="Welcome 🙏">வணக்கம் 🙏</h1><p data-en="All key facilities for trustees, in one place.">அறங்காவலர்களுக்கான ஒரே இடத்தில் அனைத்து முக்கிய வசதிகளும்.</p></div>
+  <div class="quote" data-en="&ldquo;Think and act for your own good and for society&rsquo;s good &mdash; that is an eternal duty.&rdquo;">“உனக்கும் நல்லதாய், ஊருக்கும் நல்லதாய் நினைப்பதும் செய்வதும் நித்தியகடன்.”</div>
+  <div class="section">
+    <div class="section-title"><h2 data-en="⚡ Quick Access">⚡ விரைவு அணுகல்</h2><span>Quick Access</span></div>
+    <div class="grid" id="quickGrid"></div>
+  </div>
+  <div class="section">
+    <div class="section-title"><h2 data-en="🧭 Main Sections">🧭 முக்கிய பகுதிகள்</h2></div>
+    <div class="list">
+      <a class="row" href="#accounts" data-page="accounts"><div class="ico">₹</div><div><b data-en="Income &amp; Expense Accounts">வரவு செலவு கணக்கு</b><small>Income / Expense Entry</small></div><span class="go">›</span></a>
+      <a class="row" href="#trustees" data-page="trustees"><div class="ico">👥</div><div><b data-en="Trustees">அறங்காவலர்கள்</b><small>Contacts, Folder, WhatsApp, Call</small></div><span class="go">›</span></a>
+      <a class="row" href="#service" data-page="service"><div class="ico">✨</div><div><b data-en="Service Details">சேவை விவரம்</b><small>Trust Service Statistics</small></div><span class="go">›</span></a>
+      <a class="row" href="#contacts" data-page="contacts"><div class="ico">📞</div><div><b data-en="Important Contacts &amp; Links">முக்கிய தொடர்புகள் &amp; இணைப்புகள்</b><small>Call, Email, Links</small></div><span class="go">›</span></a>
+    </div>
+  </div>
+</section>
+
+<section id="trustees" class="page">
+  <div class="hero"><h1 data-en="Trustees 👥">அறங்காவலர்கள் 👥</h1><p data-en="Folder, WhatsApp and Call access for each member.">ஒவ்வொருவரின் Folder, WhatsApp மற்றும் Call வசதி.</p></div>
+  <div class="search"><input id="memberSearch" type="search" autocomplete="off" aria-label="Search" placeholder="பெயரை தேடுங்கள்…" data-en-ph="Search by name…"></div>
+  <div class="section"><div class="profile-grid" id="memberGrid"><div class="row"><small>Loading…</small></div></div></div>
+</section>
+
+<section id="accounts" class="page">
+  <div class="hero"><h1 data-en="Accounts Center ₹">கணக்கு மையம் ₹</h1><p data-en="Quick access to income-expense entry and quarterly reports.">வரவு செலவு பதிவு மற்றும் காலாண்டு அறிக்கைகளுக்கான விரைவு அணுகல்.</p></div>
+  <div class="section"><div class="list" id="accountsList"></div></div>
+  <div class="quote" data-en="🔐 Account-related links are for trustees' internal use only.">🔐 கணக்கு தொடர்பான இணைப்புகள் அறங்காவலர்களின் உள் பயன்பாட்டிற்காக.</div>
+</section>
+
+<section id="service" class="page">
+  <div class="hero"><h1 data-en="Service Details ✨">சேவை விவரம் ✨</h1><p data-en="Statistics of the trust's spiritual service activities.">அறக்கட்டளையின் ஆன்மீக சேவைப் பணிகளின் புள்ளிவிவரம்.</p></div>
+  <div class="section">
+    <div class="section-title"><h2 data-en="📜 Service So Far">📜 இதுவரையிலான சேவை</h2><span>Cumulative</span></div>
+    <div class="stat-grid" id="svcTotal"><div class="stat-card skeleton"></div><div class="stat-card skeleton"></div><div class="stat-card skeleton"></div><div class="stat-card skeleton"></div></div>
+  </div>
+  <div class="section">
+    <div class="section-title"><h2 data-en="📅 Current Year Service">📅 நடப்பாண்டு சேவை</h2><span>Current Year</span></div>
+    <div class="stat-grid" id="svcYear"><div class="stat-card skeleton"></div><div class="stat-card skeleton"></div><div class="stat-card skeleton"></div><div class="stat-card skeleton"></div></div>
+  </div>
+  <div class="quote" id="svcNote" data-en="✨ Service continues by the Guru's grace. (Figures shown in Tamil, from the shared sheet.)">✨ குருவின் அருளால் தொடரும் சேவை.</div>
+</section>
+
+<section id="contacts" class="page">
+  <div class="hero"><h1 data-en="Important Contacts &amp; Links 📞">முக்கிய தொடர்புகள் &amp; இணைப்புகள் 📞</h1><p data-en="Tap a number to call directly, an email to open your mail app, or a link to open that page.">எண்ணைத் தொட்டால் நேரடியாக அழைப்பு செல்லும்; மின்னஞ்சலைத் தொட்டால் உங்கள் மெயில் பயன்பாடு திறக்கும்; இணைப்பைத் தொட்டால் அந்தப் பக்கம் திறக்கும்.</p></div>
+  <div class="section"><div class="section-title"><h2 data-en="📞 Phone Numbers">📞 தொலைபேசி எண்கள்</h2><span>Tap to Call</span></div><div class="list" id="phoneList"></div></div>
+  <div class="section"><div class="section-title"><h2 data-en="📧 Emails">📧 மின்னஞ்சல்கள்</h2><span>Tap to Email</span></div><div class="list" id="emailList"></div></div>
+  <div class="section"><div class="section-title"><h2 data-en="🔗 Important Links">🔗 முக்கிய இணைப்புகள்</h2><span>Tap to Open</span></div><div class="list" id="linkList"></div></div>
+  <div class="quote" data-en="📌 Phone numbers dial directly, emails open your mail app, and links open in a new tab.">📌 எண்களைத் தொட்டால் நேரடியாக அழைப்பு செல்லும்; மின்னஞ்சலைத் தொட்டால் உங்கள் மெயில் பயன்பாடு திறக்கும்; இணைப்பைத் தொட்டால் புதிய tab-ல் திறக்கும்.</div>
+</section>
+
+<section id="more" class="page">
+  <div class="hero"><h1 data-en="More ☰">மேலும் ☰</h1><p data-en="Other important links of the trust.">அறக்கட்டளையின் பிற முக்கிய இணைப்புகள்.</p></div>
+  <div class="section"><div class="list" id="moreList"></div></div>
+  <div id="adminPanel" class="section hidden"></div>
+  <div class="quote">MELERI MVKM TRUST • Trustees App<br><small>App-style multi-page navigation • Mobile friendly • PWA ready</small></div>
+</section>
+
+<nav class="bottom" aria-label="Main">
+  <button class="nav" type="button" data-page="home"><span>⌂</span><span data-en="Home">முகப்பு</span></button>
+  <button class="nav" type="button" data-page="trustees"><span>👥</span><span data-en="Trustees">அறங்காவலர்கள்</span></button>
+  <button class="nav" type="button" data-page="accounts"><span>₹</span><span data-en="Accounts">கணக்கு</span></button>
+  <button class="nav" type="button" data-page="contacts"><span>📞</span><span data-en="Contacts">தொடர்புகள்</span></button>
+  <button class="nav" type="button" data-page="more"><span>☰</span><span data-en="More">மேலும்</span></button>
+</nav>
+</div>
+
+<script type="module" src="/js/main.js"></script>
+</body>
+</html>

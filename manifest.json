@@ -1,24 +1,19 @@
 {
+  "id": "/",
   "name": "MELERI MVKM TRUST",
   "short_name": "MELERI TRUST",
-  "description": "மேலேரி மனவளக்கலை மன்ற அறக்கட்டளை - Trustees Internal App",
-  "start_url": "./index.html",
+  "description": "MELERI MVKM Trust - trustees internal app",
+  "lang": "ta",
+  "start_url": "/",
+  "scope": "/",
   "display": "standalone",
+  "orientation": "portrait",
   "background_color": "#f4f7f5",
   "theme_color": "#126b45",
-  "orientation": "portrait",
   "icons": [
-    {
-      "src": "icon-192.png",
-      "sizes": "192x192",
-      "type": "image/png",
-      "purpose": "any maskable"
-    },
-    {
-      "src": "icon-512.png",
-      "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "any maskable"
-    }
+    { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "maskable" },
+    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
   ]
 }

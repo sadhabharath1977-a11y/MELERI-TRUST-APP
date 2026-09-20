@@ -1,5 +1,3 @@
-@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Tamil:wght@400;500;600;700;800&family=Poppins:wght@500;600;700;800&display=swap');
-
 :root{
   --green-900:#0a4a30;
   --green-800:#0d5c3a;
@@ -22,9 +20,10 @@
   --radius:20px;
 }
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-html,body{height:100%;overflow:hidden;background:#0d5c3a}
+html{color-scheme:dark}
+html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#0d5c3a}
 body{
-  margin:0;background:var(--bg);color:var(--ink);
+  margin:0;background:#0d5c3a;color:var(--ink);
   font-family:"Noto Sans Tamil","Poppins",system-ui,-apple-system,sans-serif;
   -webkit-font-smoothing:antialiased;
 }
@@ -230,18 +229,6 @@ button{font-family:inherit}
 }
 .lockbox h2{font-size:18.5px;color:var(--green-800);margin:14px 0 4px;font-weight:800;letter-spacing:.2px}
 .lockbox p{font-size:11.5px;color:#8a958f;margin:0 0 4px;font-weight:600;letter-spacing:.2px}
-.pw{display:flex;gap:8px;margin-top:22px}
-.pw input{
-  flex:1;padding:15px 16px;border:2px solid var(--line);border-radius:16px;
-  font-size:15px;outline:none;background:var(--green-50);transition:.15s;font-family:inherit;
-}
-.pw input:focus{border-color:var(--green-500);background:#fff;box-shadow:0 0 0 4px rgba(36,165,106,.14)}
-.pw input.masked{-webkit-text-security:disc;text-security:disc}
-.pw button{
-  width:54px;border:0;border-radius:16px;background:var(--green-100);
-  color:var(--green-700);font-size:18px;transition:.15s;
-}
-.pw button:active{transform:scale(.92)}
 .unlock{
   width:100%;border:0;padding:16px;margin-top:14px;border-radius:16px;
   background:linear-gradient(135deg,var(--green-700),var(--green-500));
@@ -290,6 +277,19 @@ button{font-family:inherit}
   opacity:0;pointer-events:none;transition:.25s ease;
 }
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+/* ===== VERIFYING STATE / SPINNER (replaces the login-screen flash) ===== */
+.checking{display:flex;align-items:center;justify-content:center;gap:10px;margin-top:24px;min-height:44px;color:var(--green-700);font-size:13px;font-weight:700}
+.spinner{width:20px;height:20px;border-radius:50%;border:3px solid var(--green-100);border-top-color:var(--green-600);animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.lockbox .unlock{margin-top:12px}
+
+/* ===== ACCESSIBILITY ===== */
+:focus-visible{outline:3px solid rgba(36,165,106,.6);outline-offset:2px}
+.search input[type=search]{-webkit-appearance:none;appearance:none}
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}
+}
 
 @media(min-width:700px){
   body{padding:24px}

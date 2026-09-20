@@ -1,0 +1,64 @@
+MELERI MVKM TRUST APP - புதிய பதிப்பு (v2) அமைப்பு வழிகாட்டி
+=============================================================
+
+A. இந்த பதிப்பை deploy செய்வதற்கு முன் (மிக முக்கியம்)
+--------------------------------------------------------
+1. GitHub / Vercel-ல் உள்ள பழைய கோப்புகளை முழுவதும் இந்த ZIP-ன் கோப்புகளால் மாற்றவும்.
+   பழைய root-ல் இருந்த admin-emails.js, verify-access.js, trustees.js, config.js, store.js,
+   verifyGoogleToken.js, trustees-data.js, app.js, logo*.jpg/png, 1000546*.jpg ஆகியவற்றை நீக்கிவிடவும்.
+   (இந்த ZIP-ல் அவை இல்லை; பழையவை இருந்தால் தளத்தில் public-ஆகத் தெரியும்.)
+
+2. Vercel -> Project -> Settings -> Environment Variables:
+   ADMIN_EMAIL      = உங்கள் admin Google email (கட்டாயம்; code-ல் இனி எழுதப்படவில்லை)
+                      இது இல்லாவிட்டால் ஆப் "சேவையக அமைப்பு முழுமையடையவில்லை" என்று காட்டும்.
+   SESSION_SECRET   = நீண்ட random எழுத்துக்கள் (குறைந்தது 32). எ.கா. கடவுச்சொல் generator மூலம்.
+                      (இல்லாவிட்டால் Blob token-லிருந்து தானாக உருவாக்கப்படும்; இருப்பது நல்லது.)
+   விருப்பம்: GOOGLE_CLIENT_ID, ALLOWED_EMAILS (Blob செயலிழந்தால் மாற்றுப் பட்டியல்), STATS_CSV_URL
+   Blob store ஏற்கனவே இணைக்கப்பட்டிருக்க வேண்டும் (முன்பு போலவே).
+
+3. Deploy செய்யவும். முதல் முறை எல்லோரும் ஒருமுறை மீண்டும் Google-ல் login செய்ய வேண்டும்.
+
+B. deploy-க்குப் பிறகு செய்ய வேண்டியவை
+---------------------------------------
+- பழைய தளத்தில் trustees-data.js public-ஆக இருந்ததால், அந்த Drive folder இணைப்புகள் மற்றும்
+  WhatsApp group invite link வெளியே தெரிந்திருக்க வாய்ப்புள்ளது:
+    * WhatsApp group -> Group info -> Invite via link -> "Reset link" (புதிய link உருவாக்கவும்),
+      பிறகு அதை app/site-data.js-ல் மாற்றவும்.
+    * Google Drive folders / Sheets / Forms: Share -> General access = "Restricted"
+      (குறிப்பிட்ட Google accounts மட்டும்). "Anyone with the link" இருந்தால் மாற்றவும்.
+- Vercel -> Firewall -> Rate limiting rule சேர்க்கவும்: path "/api/session", POST,
+  ஒரு IP-க்கு நிமிடத்துக்கு ~20 (code-ல் ஒரு அடிப்படை வரம்பு உள்ளது; இது உலகளாவிய வரம்பு).
+- Blob store region-ஐ இந்தியா/சிங்கப்பூருக்கு அருகில் வைக்கவும் (புதிதாக உருவாக்கும்போது).
+  Functions region vercel.json-ல் bom1 (மும்பை) என அமைக்கப்பட்டுள்ளது.
+
+C. சோதனை பட்டியல் (deploy-க்குப் பிறகு)
+----------------------------------------
+[ ] உங்கள்-தளம்/trustees-data.js  -> 404 வர வேண்டும்
+[ ] உங்கள்-தளம்/api/_lib/config.js -> 404 வர வேண்டும்
+[ ] Login இல்லாமல் View Source-ல் WhatsApp/Drive இணைப்புகள் இல்லை
+[ ] Admin account login ஆகிறது; "மேலும்" பக்கத்தில் நிர்வாகம் தெரிகிறது
+[ ] ஒரு புதிய email சேர்த்து, அந்த account-ல் login சோதிக்கவும்; பிறகு நீக்கி மீண்டும் சோதிக்கவும்
+[ ] Service பக்கத்தில் எண்கள் தெரிகின்றன; Dashboard இணைப்பு திறக்கிறது
+
+D. உள்ளடக்கத்தை மாற்றுவது எப்படி
+-------------------------------
+- இணைப்புகள், தொலைபேசி எண்கள், மின்னஞ்சல்கள்:  api/_lib/site-data.js
+- அறங்காவலர்கள் (பெயர், பதவி, எண், folder):     api/_lib/trustees-data.js
+- புதிய புகைப்படம்: 160x160 WebP ஆக, /img/ கோப்புறையில் புதிய பெயருடன் வைத்து trustees-data.js-ல் குறிப்பிடவும்.
+- ஒவ்வொரு முறை index.html / style.css / js கோப்புகளை மாற்றி deploy செய்யும்போது sw.js-ல்
+  VERSION = "v20" என்பதை "v21", "v22"... என உயர்த்தவும் (அப்போதுதான் பயனர்களுக்கு புதிய பதிப்பு உடனே வரும்).
+
+E. மாற்றங்களின் சுருக்கம்
+-------------------------
+பாதுகாப்பு: root-ல் இருந்த நகல் கோப்புகள் நீக்கம்; இணைப்புகள்/எண்கள் login-க்குப் பின் மட்டும் server-லிருந்து;
+HttpOnly cookie session; Google token உள்ளூரிலேயே சரிபார்ப்பு; CSRF பாதுகாப்பு; CSP + security headers;
+login rate limit; admin மாற்றங்களுக்கு audit log (Vercel Logs); XSS திருத்தம்; ஒவ்வொரு request-லும் அனுமதி மறுசோதனை.
+அமைப்பு: api/ + api/_lib/, js/ modules, தரவு தனிக் கோப்புகள், சரியான HTML, Back button, iPhone/PC dashboard, CSV parser.
+வேகம்: 1 API call, சர்வர் cache, மும்பை region, font link, SWR service worker, படங்கள் 168KB->25KB, icons 296KB->56KB.
+
+F. தெரிந்த வரம்புகள்
+-------------------
+- அறங்காவலர் புகைப்படங்கள் யூகிக்க முடியாத hash பெயர்களில் உள்ளன; ஆனால் URL தெரிந்தால் திறக்கும் (முழு private அல்ல).
+- Rate limit code-ல் "best-effort"; உறுதியான வரம்புக்கு Firewall rule (மேலே).
+- Admin ஒருவர் மட்டும். ஒரே நேரத்தில் இருவர் பட்டியலை மாற்றினால் கடைசி மாற்றம் நிற்கும் (அரிது).
+- Google Fonts இன்னும் Google-லிருந்தே load ஆகின்றன (self-host செய்யலாம்).
