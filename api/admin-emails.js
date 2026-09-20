@@ -1,65 +1,60 @@
-const { verifyGoogleToken } = require("./_lib/verifyGoogleToken");
-const { readAllowedEmails, writeAllowedEmails } = require("./_lib/store");
+"use strict";
+// Admin only: list / add / remove allowed e-mail addresses.
 const { ADMIN_EMAIL } = require("./_lib/config");
+const { authenticate } = require("./_lib/auth");
+const { readAllowedEmails, writeAllowedEmails } = require("./_lib/store");
+const { noStore, send, csrfOk } = require("./_lib/http");
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const MAX_EMAILS = 500;
 
-function tokenFromRequest(req) {
-  // GET requests send the token in an Authorization header (not a URL query
-  // string) so it never ends up recorded in server/proxy access logs.
-  if (req.method === "GET") {
-    const auth = req.headers && req.headers.authorization;
-    return auth && auth.startsWith("Bearer ") ? auth.slice(7) : null;
-  }
-  return req.body && req.body.idToken;
-}
-
-async function requireAdmin(req, res) {
-  const idToken = tokenFromRequest(req);
-  const email = await verifyGoogleToken(idToken);
-  if (!email || email !== ADMIN_EMAIL) {
-    res.status(403).json({ error: "admin only" });
-    return null;
-  }
-  return email;
+function emailFrom(req) {
+  const fromQuery = req.query && req.query.email;
+  const fromBody = req.body && req.body.email;
+  return String(fromQuery || fromBody || "").trim().toLowerCase();
 }
 
 module.exports = async (req, res) => {
-  const admin = await requireAdmin(req, res);
-  if (!admin) return;
+  noStore(res);
+  if (!ADMIN_EMAIL) return send(res, 500, { error: "config", detail: "ADMIN_EMAIL" });
+  try {
+    const s = await authenticate(req);
+    if (!s) return send(res, 401, { error: "not logged in" }); // lets the app return to the login screen
+    if (!s.isAdmin) return send(res, 403, { error: "admin only" });
 
-  if (req.method === "GET") {
-    const emails = await readAllowedEmails();
-    res.status(200).json({ emails, adminEmail: ADMIN_EMAIL });
-    return;
-  }
+    if (req.method !== "GET" && !csrfOk(req)) return send(res, 403, { error: "bad request origin" });
 
-  if (req.method === "POST") {
-    const target = String((req.body && req.body.email) || "").trim().toLowerCase();
-    if (!EMAIL_RE.test(target)) {
-      res.status(400).json({ error: "invalid email" });
-      return;
+    // Always start from a fresh read so two admins cannot overwrite each other with stale data.
+    if (req.method === "GET") {
+      const emails = await readAllowedEmails({ fresh: true });
+      return send(res, 200, { emails: [...new Set([ADMIN_EMAIL, ...emails])], adminEmail: ADMIN_EMAIL });
     }
-    const emails = await readAllowedEmails();
-    if (!emails.includes(target)) {
-      emails.push(target);
-      await writeAllowedEmails(emails);
-    }
-    res.status(200).json({ emails });
-    return;
-  }
 
-  if (req.method === "DELETE") {
-    const target = String((req.body && req.body.email) || "").trim().toLowerCase();
-    if (target === ADMIN_EMAIL) {
-      res.status(400).json({ error: "cannot remove admin" });
-      return;
+    if (req.method === "POST") {
+      const target = emailFrom(req);
+      if (!EMAIL_RE.test(target) || target.length > 254) return send(res, 400, { error: "invalid email" });
+      const current = await readAllowedEmails({ fresh: true });
+      if (current.length >= MAX_EMAILS) return send(res, 400, { error: "list is full" });
+      const next = [...new Set([ADMIN_EMAIL, ...current, target])];
+      await writeAllowedEmails(next);
+      console.log(JSON.stringify({ audit: "email-added", by: s.email, target }));
+      return send(res, 200, { emails: next });
     }
-    const emails = (await readAllowedEmails()).filter((e) => e !== target);
-    await writeAllowedEmails(emails);
-    res.status(200).json({ emails });
-    return;
-  }
 
-  res.status(405).json({ error: "method not allowed" });
+    if (req.method === "DELETE") {
+      const target = emailFrom(req);
+      if (target === ADMIN_EMAIL) return send(res, 400, { error: "cannot remove admin" });
+      const current = await readAllowedEmails({ fresh: true });
+      const next = [...new Set([ADMIN_EMAIL, ...current.filter((e) => e !== target)])];
+      await writeAllowedEmails(next);
+      console.log(JSON.stringify({ audit: "email-removed", by: s.email, target }));
+      return send(res, 200, { emails: next });
+    }
+
+    res.setHeader("Allow", "GET, POST, DELETE");
+    return send(res, 405, { error: "method not allowed" });
+  } catch (e) {
+    console.error("admin-emails error:", e && e.message ? e.message : e);
+    return send(res, 500, { error: "storage is not connected or could not be updated" });
+  }
 };
