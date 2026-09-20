@@ -2,7 +2,7 @@
 // Strategy: app shell = stale-while-revalidate (instant start, refreshed in the background);
 // photos & icons = cache-first (their file names are content hashes); fonts = stale-while-revalidate;
 // /api/* is NEVER cached (login and member data must always come live from the server).
-const VERSION = "v20";
+const VERSION = "v22";
 const SHELL_CACHE = "meleri-shell-" + VERSION;
 const IMG_CACHE = "meleri-img-" + VERSION;
 const FONT_CACHE = "meleri-fonts-v1";
@@ -56,7 +56,7 @@ async function cacheFirst(cacheName, request) {
   const cache = await caches.open(cacheName);
   const hit = await cache.match(request);
   if (hit) return hit;
-  const res = await fetch(request);
+  const res = await fetch(request, { cache: "reload" }); // never reuse a stale/failed copy from the HTTP cache
   if (res.status === 200) cache.put(request, res.clone());
   return res;
 }
