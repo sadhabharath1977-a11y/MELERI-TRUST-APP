@@ -4,7 +4,7 @@
 const { parseCSV } = require("./csv");
 const { STATS_CSV_URL } = require("./config");
 
-const CACHE_MS = 2 * 60 * 1000;
+const CACHE_MS = 30 * 1000;
 let cache = { at: 0, data: null };
 let inflight = null;
 

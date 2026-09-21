@@ -19,7 +19,7 @@ module.exports = async (req, res) => {
     }
     const data = await getStats();
     // Private (never shared/CDN) but reusable by the browser for a minute.
-    res.setHeader("Cache-Control", "private, max-age=60");
+    res.setHeader("Cache-Control", "private, max-age=15");
     return send(res, 200, data);
   } catch (e) {
     console.error("stats error:", e && e.message ? e.message : e);

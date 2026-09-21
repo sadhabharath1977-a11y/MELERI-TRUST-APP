@@ -1,5 +1,7 @@
-// Service worker. BUMP `VERSION` ON EVERY DEPLOY that changes index.html / style.css / js/*.
-// Strategy: app shell = stale-while-revalidate (instant start, refreshed in the background);
+// Service worker.
+// Strategy: app shell (HTML/JS/CSS) = NETWORK-FIRST with a 3.5 s timeout and the cached copy as the
+// fallback (so a new upload to GitHub is always picked up on the next open - no version to bump, no
+// mixed old/new files; slow or missing network still starts from cache);
 // photos & icons = cache-first (their file names are content hashes); fonts = stale-while-revalidate;
 // /api/* is NEVER cached (login and member data must always come live from the server).
 const VERSION = "v23";
@@ -52,6 +54,31 @@ async function staleWhileRevalidate(event, cacheName, key) {
   return (await network) || Response.error();
 }
 
+async function networkFirst(event, cacheName, key) {
+  const cache = await caches.open(cacheName);
+  const cached = await cache.match(key);
+  const network = fetch(event.request).then((res) => {
+    if (res && res.status === 200) cache.put(key, res.clone()); // never cache errors
+    return res;
+  });
+  if (!cached) {
+    try {
+      return await network;
+    } catch (e) {
+      return Response.error();
+    }
+  }
+  const timeout = new Promise((resolve) => setTimeout(() => resolve(null), 3500));
+  try {
+    const res = await Promise.race([network, timeout]);
+    if (res && res.status < 500) return res;
+  } catch (e) {
+    // offline: fall through to the cached copy
+  }
+  event.waitUntil(network.catch(() => {})); // let a slow request finish and refresh the cache
+  return cached;
+}
+
 async function cacheFirst(cacheName, request) {
   const cache = await caches.open(cacheName);
   const hit = await cache.match(request);
@@ -73,10 +100,10 @@ self.addEventListener("fetch", (event) => {
       return;
     }
     if (req.mode === "navigate") {
-      event.respondWith(staleWhileRevalidate(event, SHELL_CACHE, "/index.html"));
+      event.respondWith(networkFirst(event, SHELL_CACHE, "/index.html"));
       return;
     }
-    event.respondWith(staleWhileRevalidate(event, SHELL_CACHE, req));
+    event.respondWith(networkFirst(event, SHELL_CACHE, req));
     return;
   }
   if (url.hostname === "fonts.googleapis.com" || url.hostname === "fonts.gstatic.com") {

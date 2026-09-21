@@ -70,7 +70,7 @@ function initDashboardLinks() {
     if (/Android/i.test(navigator.userAgent)) {
       // Opens the installed Google Sheets app directly. (Android only - iPhone/PC get the normal link.)
       const path = url.replace(/^https:\/\//, "").split("#")[0];
-      location.href = "intent://" + path + "#Intent;scheme=https;package=com.google.android.apps.docs.editors.sheets;end";
+      location.href = "intent://" + path + "#Intent;scheme=https;package=com.google.android.apps.docs.editors.sheets;S.browser_fallback_url=" + encodeURIComponent(url) + ";end";
     } else {
       window.open(url, "_blank", "noopener,noreferrer");
     }

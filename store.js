@@ -40,7 +40,7 @@ async function readAllowedEmails(opts) {
   } catch (e) {
     failed = true;
     console.error("readAllowedEmails:", e && e.message ? e.message : e);
-    list = envFallback(); // fail closed: only the env fallback (and the admin) can enter
+    list = cache.list || envFallback(); // outage: keep the last good list so members are not locked out
   }
   // Errors are cached only briefly so the app recovers quickly when Blob comes back.
   cache = { at: failed ? Date.now() - CACHE_MS + 10000 : Date.now(), list };
