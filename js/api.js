@@ -32,6 +32,7 @@ export const api = {
   admin: {
     list: () => request("GET", "/api/admin-emails"),
     add: (email, role) => request("POST", "/api/admin-emails", { email, role }),
-    remove: (email) => request("DELETE", "/api/admin-emails?email=" + encodeURIComponent(email))
+    remove: (email) => request("DELETE", "/api/admin-emails?email=" + encodeURIComponent(email)),
+    resetDevice: (email) => request("PATCH", "/api/admin-emails?email=" + encodeURIComponent(email), { action: "reset-device" })
   }
 };

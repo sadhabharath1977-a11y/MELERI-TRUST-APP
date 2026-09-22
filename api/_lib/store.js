@@ -1,6 +1,7 @@
 "use strict";
 // Allowed-member list, stored as one private object in Vercel Blob.
-// Each member is { email, role }. role is "trustee" (default) or "master" (ஆசிரியர்கள்/masters).
+// Each member is { email, role, deviceId }. role is "trustee" (default) or "master" (ஆசிரியர்கள்/masters).
+// deviceId (opaque random string, or null) is the device this email is currently locked to — see auth.js.
 // A short in-memory cache avoids a Blob read on every single request.
 const PATHNAME = "data/allowed-emails.json";
 const CACHE_MS = 60 * 1000;
@@ -14,7 +15,7 @@ function __setBlobForTests(fake) {
   cache = { at: 0, list: null };
 }
 
-let cache = { at: 0, list: null }; // list = array of { email, role }
+let cache = { at: 0, list: null }; // list = array of { email, role, deviceId }
 
 // Accepts the old plain-string format too, so existing stored data keeps working.
 function normalizeMembers(value) {
@@ -26,7 +27,11 @@ function normalizeMembers(value) {
     const email = String((isObj ? raw.email : raw) || "").trim().toLowerCase();
     if (!email || seen.has(email)) continue;
     seen.add(email);
-    out.push({ email, role: isObj && raw.role === "master" ? "master" : "trustee" });
+    out.push({
+      email,
+      role: isObj && raw.role === "master" ? "master" : "trustee",
+      deviceId: (isObj && typeof raw.deviceId === "string" && raw.deviceId) || null
+    });
   }
   return out;
 }
@@ -35,7 +40,7 @@ function envFallback() {
   return normalizeMembers(String(process.env.ALLOWED_EMAILS || "").split(/[\n,]+/));
 }
 
-// opts.fresh = true bypasses the cache (used by the admin screens and before every write).
+// opts.fresh = true bypasses the cache (used by the admin screens, login, and before every write).
 async function readMembers(opts) {
   const fresh = opts && opts.fresh;
   if (!fresh && cache.list && Date.now() - cache.at < CACHE_MS) return cache.list;
@@ -62,8 +67,12 @@ async function readAllowedEmails(opts) {
   return (await readMembers(opts)).map((m) => m.email);
 }
 
+async function getMember(email, opts) {
+  return (await readMembers(opts)).find((m) => m.email === email) || null;
+}
+
 async function roleOf(email, opts) {
-  const m = (await readMembers(opts)).find((x) => x.email === email);
+  const m = await getMember(email, opts);
   return (m && m.role) || "trustee";
 }
 
@@ -79,4 +88,40 @@ async function writeMembers(members) {
   return list;
 }
 
-module.exports = { readMembers, readAllowedEmails, writeMembers, roleOf, normalizeMembers, __setBlobForTests };
+// Fresh-reads once, checks/locks this email to this device, and returns its role - used by the
+// login endpoint so a login needs only one Blob read+write instead of two.
+// Returns { ok: true, role } if this device is now (or already was) the bound one,
+// { ok: false, other: true, role } if a DIFFERENT device already holds the lock,
+// or { ok: false, other: false, role: null } if the email is not a member at all.
+async function checkAndBindDevice(email, deviceId) {
+  const current = await readMembers({ fresh: true });
+  const m = current.find((x) => x.email === email);
+  if (!m) return { ok: false, other: false, role: null };
+  if (m.deviceId && m.deviceId !== deviceId) return { ok: false, other: true, role: m.role };
+  if (m.deviceId !== deviceId) {
+    m.deviceId = deviceId;
+    await writeMembers(current);
+  }
+  return { ok: true, other: false, role: m.role };
+}
+
+// Admin action: releases the device lock so the member can log in again from any device.
+async function resetDevice(email) {
+  const current = await readMembers({ fresh: true });
+  const m = current.find((x) => x.email === email);
+  if (!m) return null;
+  m.deviceId = null;
+  return writeMembers(current);
+}
+
+module.exports = {
+  readMembers,
+  readAllowedEmails,
+  getMember,
+  writeMembers,
+  roleOf,
+  checkAndBindDevice,
+  resetDevice,
+  normalizeMembers,
+  __setBlobForTests
+};

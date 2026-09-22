@@ -1,8 +1,8 @@
 "use strict";
-// Admin only: list / add / remove members, each with a role ("trustee" or "master").
+// Admin only: list / add / remove members (each with a role), and reset a member's device lock.
 const { ADMIN_EMAIL } = require("./_lib/config");
 const { authenticate } = require("./_lib/auth");
-const { readMembers, writeMembers } = require("./_lib/store");
+const { readMembers, writeMembers, resetDevice } = require("./_lib/store");
 const { noStore, send, csrfOk } = require("./_lib/http");
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -40,11 +40,25 @@ module.exports = async (req, res) => {
       if (!EMAIL_RE.test(target) || target.length > 254) return send(res, 400, { error: "invalid email" });
       if (target === ADMIN_EMAIL) return send(res, 400, { error: "already admin" });
       const current = await readMembers({ fresh: true });
-      if (current.length >= MAX_EMAILS) return send(res, 400, { error: "list is full" });
-      const next = [...current.filter((m) => m.email !== target), { email: target, role }];
+      const existing = current.find((m) => m.email === target);
+      if (!existing && current.length >= MAX_EMAILS) return send(res, 400, { error: "list is full" });
+      // Editing an existing member's role keeps their device lock as-is; only "Reset Device" clears it.
+      const next = [...current.filter((m) => m.email !== target), { email: target, role, deviceId: (existing && existing.deviceId) || null }];
       await writeMembers(next);
       console.log(JSON.stringify({ audit: "member-added", by: s.email, target, role }));
       return send(res, 200, { members: next });
+    }
+
+    if (req.method === "PATCH") {
+      // Only action supported today: release a member's device lock.
+      const target = emailFrom(req);
+      const action = (req.body && req.body.action) || (req.query && req.query.action);
+      if (action !== "reset-device") return send(res, 400, { error: "unknown action" });
+      if (target === ADMIN_EMAIL) return send(res, 400, { error: "admin has no device lock" });
+      const members = await resetDevice(target);
+      if (!members) return send(res, 404, { error: "not found" });
+      console.log(JSON.stringify({ audit: "device-reset", by: s.email, target }));
+      return send(res, 200, { members });
     }
 
     if (req.method === "DELETE") {
@@ -57,7 +71,7 @@ module.exports = async (req, res) => {
       return send(res, 200, { members: next });
     }
 
-    res.setHeader("Allow", "GET, POST, DELETE");
+    res.setHeader("Allow", "GET, POST, PATCH, DELETE");
     return send(res, 405, { error: "method not allowed" });
   } catch (e) {
     console.error("admin-emails error:", e && e.message ? e.message : e);

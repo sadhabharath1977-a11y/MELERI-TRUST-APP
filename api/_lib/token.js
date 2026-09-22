@@ -1,10 +1,14 @@
 "use strict";
-// Signed session cookie (HMAC-SHA256). The cookie is HttpOnly + Secure + SameSite=Strict,
-// so page JavaScript can never read it (an XSS bug can no longer steal the login).
+// Signed session cookie (HMAC-SHA256) + a separate, longer-lived device-identity cookie.
+// Both are HttpOnly + Secure + SameSite=Strict, so page JavaScript can never read them
+// (an XSS bug can no longer steal the login or spoof the device id).
 const crypto = require("crypto");
 const { SESSION_TTL_SECONDS } = require("./config");
 
 const COOKIE_NAME = "__Host-meleri_session"; // __Host- prefix: Secure, Path=/, no Domain
+const DEVICE_COOKIE_NAME = "__Host-meleri_device";
+const DEVICE_TTL_SECONDS = 400 * 24 * 60 * 60; // ~400 days (the maximum browsers honour)
+const DEVICE_ID_RE = /^[a-f0-9]{32}$/;
 
 function secret() {
   if (process.env.SESSION_SECRET) return process.env.SESSION_SECRET;
@@ -55,6 +59,18 @@ function readSession(req) {
   return verify(c[COOKIE_NAME]);
 }
 
+// The device cookie is NOT signed - it is just a random id, compared against what is stored
+// against the email in Blob (see store.js checkAndBindDevice). Reading an invalid/tampered value
+// simply means "unrecognised device", which is the safe default.
+function readDeviceId(req) {
+  const c = parseCookies(req.headers && req.headers.cookie);
+  const id = c[DEVICE_COOKIE_NAME];
+  return typeof id === "string" && DEVICE_ID_RE.test(id) ? id : null;
+}
+function newDeviceId() {
+  return crypto.randomBytes(16).toString("hex");
+}
+
 function setSessionCookie(res, email) {
   res.setHeader(
     "Set-Cookie",
@@ -62,8 +78,32 @@ function setSessionCookie(res, email) {
   );
 }
 
+// Sets the session cookie AND (only when a new device id had to be generated) the device cookie,
+// in a single response - Node/Vercel send an array as multiple Set-Cookie headers.
+function setAuthCookies(res, email, deviceId, isNewDeviceCookie) {
+  const sessionCookie = COOKIE_NAME + "=" + sign(email) + "; Max-Age=" + SESSION_TTL_SECONDS + "; Path=/; HttpOnly; Secure; SameSite=Strict";
+  if (!isNewDeviceCookie) {
+    res.setHeader("Set-Cookie", sessionCookie);
+    return;
+  }
+  const deviceCookie = DEVICE_COOKIE_NAME + "=" + deviceId + "; Max-Age=" + DEVICE_TTL_SECONDS + "; Path=/; HttpOnly; Secure; SameSite=Strict";
+  res.setHeader("Set-Cookie", [sessionCookie, deviceCookie]);
+}
+
 function clearSessionCookie(res) {
   res.setHeader("Set-Cookie", COOKIE_NAME + "=; Max-Age=0; Path=/; HttpOnly; Secure; SameSite=Strict");
 }
 
-module.exports = { COOKIE_NAME, sign, verify, parseCookies, readSession, setSessionCookie, clearSessionCookie };
+module.exports = {
+  COOKIE_NAME,
+  DEVICE_COOKIE_NAME,
+  sign,
+  verify,
+  parseCookies,
+  readSession,
+  readDeviceId,
+  newDeviceId,
+  setSessionCookie,
+  setAuthCookies,
+  clearSessionCookie
+};

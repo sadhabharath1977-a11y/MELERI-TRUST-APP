@@ -270,6 +270,8 @@ button{font-family:inherit}
 .admin-row b{word-break:break-all}
 .admin-remove{border:0;background:var(--gold-100);color:#d84a3f;width:34px;height:34px;border-radius:12px;font-weight:800;flex:none;margin-left:auto}
 .admin-remove:active{transform:scale(.9)}
+.admin-reset{border:0;background:var(--green-100);color:var(--green-700);width:34px;height:34px;border-radius:12px;font-weight:800;flex:none;font-size:15px}
+.admin-reset:active{transform:scale(.9)}
 
 .toast{
   position:fixed;bottom:100px;left:50%;transform:translateX(-50%) translateY(10px);
