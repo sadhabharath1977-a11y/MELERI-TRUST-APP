@@ -18,10 +18,31 @@ function effectiveRole() {
 function isMasterView() {
   return effectiveRole() === "master";
 }
-// Hides bottom-nav buttons and home-page rows marked data-trustee-only whenever a master/ஆசிரியர் is viewing.
+// Sets text in both languages at once (keeps the Tamil/English toggle in i18n.js working correctly
+// after we change this text for the master/ஆசிரியர் view).
+function setBilingual(el, ta, en) {
+  if (!el) return;
+  el.dataset.ta = ta;
+  el.dataset.en = en;
+  el.textContent = curLang() === "en" ? en : ta;
+}
+// Hides bottom-nav buttons and home-page rows marked data-trustee-only whenever a master/ஆசிரியர் is viewing,
+// re-flows the remaining nav buttons across the full width, and switches the header/home wording to match.
 function applyRoleVisibility() {
-  const hide = isMasterView();
-  document.querySelectorAll("[data-trustee-only]").forEach((el) => el.classList.toggle("hidden", hide));
+  const master = isMasterView();
+  document.querySelectorAll("[data-trustee-only]").forEach((el) => el.classList.toggle("hidden", master));
+  const nav = $(".bottom");
+  if (nav) nav.classList.toggle("nav-3", master);
+  setBilingual(
+    $("#brandSub"),
+    master ? "ஆசிரியர்கள்/Masters Internal App" : "அறங்காவலர்கள் Internal App",
+    master ? "Masters Internal App" : "Trustees Internal App"
+  );
+  setBilingual(
+    $("#homeHeroSub"),
+    master ? "ஆசிரியர்களுக்கான ஒரே இடத்தில் அனைத்து முக்கிய வசதிகளும்." : "அறங்காவலர்களுக்கான ஒரே இடத்தில் அனைத்து முக்கிய வசதிகளும்.",
+    master ? "All key facilities for masters, in one place." : "All key facilities for trustees, in one place."
+  );
 }
 function setPreviewRole(role) {
   previewRole = role === "master" ? "master" : null;

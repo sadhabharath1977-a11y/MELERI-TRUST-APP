@@ -200,6 +200,8 @@ button{font-family:inherit}
 .nav.active{color:var(--green-700);background:var(--green-100);font-weight:800}
 .nav.active span:first-child{transform:translateY(-1px) scale(1.05)}
 .nav:active{transform:scale(.93)}
+/* Master/ஆசிரியர் view hides 2 of the 5 nav buttons - re-flow the rest across the full width instead of leaving them bunched on the left. */
+.bottom.nav-3{grid-template-columns:repeat(3,1fr)}
 
 /* ===== LOCK / LOGIN ===== */
 .lock{
