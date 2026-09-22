@@ -1,7 +1,7 @@
 "use strict";
 const { ADMIN_EMAIL } = require("./config");
 const { readSession } = require("./token");
-const { readAllowedEmails } = require("./store");
+const { readAllowedEmails, roleOf } = require("./store");
 
 // The admin can always enter, even before any allow-list exists.
 async function isAllowed(email, opts) {
@@ -16,7 +16,9 @@ async function authenticate(req) {
   const email = readSession(req);
   if (!email) return null;
   if (!(await isAllowed(email))) return null;
-  return { email, isAdmin: !!ADMIN_EMAIL && email === ADMIN_EMAIL };
+  const isAdmin = !!ADMIN_EMAIL && email === ADMIN_EMAIL;
+  const role = isAdmin ? "admin" : await roleOf(email);
+  return { email, isAdmin, role };
 }
 
-module.exports = { isAllowed, authenticate };
+module.exports = { isAllowed, authenticate, roleOf };

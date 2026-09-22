@@ -31,7 +31,7 @@ export const api = {
   stats: () => request("GET", "/api/stats"),
   admin: {
     list: () => request("GET", "/api/admin-emails"),
-    add: (email) => request("POST", "/api/admin-emails", { email }),
+    add: (email, role) => request("POST", "/api/admin-emails", { email, role }),
     remove: (email) => request("DELETE", "/api/admin-emails?email=" + encodeURIComponent(email))
   }
 };

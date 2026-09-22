@@ -19,17 +19,23 @@ const put = (sel, html) => {
   if (el) el.innerHTML = html;
 };
 
-export function renderSite(site) {
+// role: "master" (ஆசிரியர்கள்/Masters) shows a master-specific lock notice; anything else (trustee/admin) shows the trustee one.
+export function renderSite(site, role) {
   put("#quickGrid", site.quick.map(tile).join(""));
   put("#accountsList", site.accounts.map(linkRow).join(""));
   put("#phoneList", site.phones.map((p) => row({ href: "tel:+" + digits(p.tel), icon: "📞", title: pick(p), sub: p.show })).join(""));
   put("#emailList", site.emails.map((m) => row({ href: "mailto:" + m.mail, icon: "📧", title: pick(m), sub: m.mail })).join(""));
   put("#linkList", site.links.map(linkRow).join(""));
+  const isMaster = role === "master";
+  const lockTitle = isMaster ? "ஆசிரியர்கள்/Masters Internal Use Only" : "Trustees Internal Use Only";
+  const lockSub = isMaster
+    ? t("இந்த App ஆசிரியர்கள்/Masters-ன் உள் பயன்பாட்டிற்கு மட்டும்.", "This app is for Masters' internal use only.")
+    : t("இந்த App அறங்காவலர்களின் உள் பயன்பாட்டிற்காக.", "This app is for trustees' internal use only.");
   put(
     "#moreList",
     site.more.map(linkRow).join("") +
       '<a class="row" href="#contacts" data-page="contacts"><div class="ico">📞</div><div><b>' + esc(t("முக்கிய தொடர்புகள் & இணைப்புகள்", "Important Contacts & Links")) + '</b><small>Call, Email, Links</small></div><span class="go">›</span></a>' +
-      '<div class="row"><div class="ico">🔒</div><div><b>Trustees Internal Use Only</b><small>' + esc(t("இந்த App அறங்காவலர்களின் உள் பயன்பாட்டிற்காக.", "This app is for trustees' internal use only.")) + '</small></div><span class="badge">PRIVATE</span></div>'
+      '<div class="row"><div class="ico">🔒</div><div><b>' + esc(lockTitle) + "</b><small>" + esc(lockSub) + '</small></div><span class="badge">PRIVATE</span></div>'
   );
 }
 
@@ -91,39 +97,59 @@ function toggleDropdown(state, onLogout) {
   }, 0);
 }
 
-// ===== ADMIN: add / remove allowed e-mails (the server re-checks admin rights on every call) =====
+// ===== Admin-only: preview the app as a Trustee sees it, or as a Master/ஆசிரியர் sees it =====
+export function renderRoleSwitch(previewRole, onSwitch) {
+  const host = $("#roleSwitch");
+  if (!host) return;
+  host.classList.remove("hidden");
+  const isMaster = previewRole === "master";
+  host.innerHTML =
+    '<div class="section-title"><h2>👁️ ' + esc(t("பார்வை", "View")) + "</h2><span>Preview</span></div>" +
+    '<div class="admin-add"><button id="viewTrusteeBtn" class="unlock" type="button"' + (isMaster ? "" : " disabled") + ">👥 " + esc(t("அறங்காவலர் View", "Trustee View")) + "</button>" +
+    '<button id="viewMasterBtn" class="unlock" type="button"' + (isMaster ? " disabled" : "") + ">🎓 " + esc(t("ஆசிரியர்/Master View", "Master View")) + "</button></div>";
+  $("#viewTrusteeBtn").onclick = () => onSwitch("trustee");
+  $("#viewMasterBtn").onclick = () => onSwitch("master");
+}
+
+// ===== ADMIN: add / remove members, each with a role (the server re-checks admin rights on every call) =====
 export function renderAdminPanel(state) {
   const host = $("#adminPanel");
   if (!host) return;
   host.classList.remove("hidden");
   host.innerHTML =
     '<div class="section-title"><h2>🛡️ ' + esc(t("நிர்வாகம்", "Admin")) + "</h2><span>Admin</span></div>" +
-    '<div class="admin-add"><input id="adminNewEmail" type="email" autocomplete="off" aria-label="Email" placeholder="' + esc(t("புதிய Email சேர்க்க…", "Add new email…")) + '"><button id="adminAddBtn" class="unlock" type="button">➕ ' + esc(t("சேர்", "Add")) + "</button></div>" +
+    '<div class="admin-add"><input id="adminNewEmail" type="email" autocomplete="off" aria-label="Email" placeholder="' + esc(t("புதிய Email சேர்க்க…", "Add new email…")) + '">' +
+    '<select id="adminNewRole" aria-label="Role"><option value="trustee">' + esc(t("அறங்காவலர்", "Trustee")) + '</option><option value="master">' + esc(t("ஆசிரியர்/Master", "Master")) + "</option></select>" +
+    '<button id="adminAddBtn" class="unlock" type="button">➕ ' + esc(t("சேர்", "Add")) + "</button></div>" +
     '<div id="adminErr" class="err" role="alert"></div>' +
     '<div id="adminList" class="list admin-list"><div class="row"><small>Loading…</small></div></div>';
 
   const setErr = (msg) => ($("#adminErr").textContent = msg || "");
   const failText = (r, fallback) => (r.status === 0 ? t("இணைய இணைப்பு தோல்வி", "Network error") : r.data.error || fallback);
+  const roleLabel = (role) => (role === "master" ? t("ஆசிரியர்/Master", "Master") : t("அறங்காவலர்", "Trustee"));
 
-  function renderList(emails) {
+  function renderList(members) {
     const list = $("#adminList");
-    if (!emails || !emails.length) {
-      list.innerHTML = "<div class='row'><small>" + esc(t("Emails இல்லை", "No emails")) + "</small></div>";
+    const adminRow = '<div class="row admin-row"><div class="ico">👤</div><div><b>' + esc(state.email) + "</b><small>" + esc(t("Admin (நீங்கள்)", "Admin (You)")) + "</small></div></div>";
+    if (!members || !members.length) {
+      list.innerHTML = adminRow;
       return;
     }
-    list.innerHTML = emails
-      .map((e) => {
-        const me = e === state.email;
-        return '<div class="row admin-row"><div class="ico">👤</div><div><b>' + esc(e) + "</b>" + (me ? "<small>" + esc(t("Admin (நீங்கள்)", "Admin (You)")) + "</small>" : "") + "</div>" + (me ? "" : '<button class="admin-remove" type="button" aria-label="Remove" data-email="' + esc(e) + '">✕</button>') + "</div>";
-      })
-      .join("");
+    list.innerHTML =
+      adminRow +
+      members
+        .map(
+          (m) =>
+            '<div class="row admin-row"><div class="ico">👤</div><div><b>' + esc(m.email) + "</b><small>" + esc(roleLabel(m.role)) + '</small></div><button class="admin-remove" type="button" aria-label="Remove" data-email="' + esc(m.email) + '">✕</button></div>'
+        )
+        .join("");
     list.querySelectorAll(".admin-remove").forEach((btn) => {
       btn.onclick = async () => {
         const email = btn.dataset.email;
         if (!confirm(t(email + " ஐ நீக்கவா?", "Remove " + email + "?"))) return;
         setErr("");
         const r = await api.admin.remove(email);
-        if (r.ok) renderList(r.data.emails);
+        if (r.ok) renderList(r.data.members);
         else setErr(failText(r, t("நீக்க முடியவில்லை", "Could not remove")));
       };
     });
@@ -132,17 +158,18 @@ export function renderAdminPanel(state) {
   $("#adminAddBtn").onclick = async () => {
     const input = $("#adminNewEmail");
     const email = input.value.trim();
+    const role = $("#adminNewRole").value;
     if (!email) return;
     setErr("");
-    const r = await api.admin.add(email);
+    const r = await api.admin.add(email, role);
     if (r.ok) {
       input.value = "";
-      renderList(r.data.emails);
+      renderList(r.data.members);
     } else setErr(failText(r, t("சேர்க்க முடியவில்லை", "Could not add")));
   };
 
   api.admin.list().then((r) => {
-    if (r.ok) renderList(r.data.emails);
+    if (r.ok) renderList(r.data.members);
     else setErr(failText(r, t("Load ஆகவில்லை", "Could not load")));
   });
 }

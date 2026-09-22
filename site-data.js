@@ -49,4 +49,19 @@ const SITE = {
   ]
 };
 
-module.exports = { SITE };
+// ஆசிரியர்கள்/Masters-க்கான பிரிவு: மேலே உள்ள SITE-லிருந்தே தேர்ந்தெடுக்கப்பட்டவை (புதிய இணைப்பு எதுவும் இல்லை).
+//   - Common Documents, Meeting Notes, Online Admission (Dashboard தவிர்த்து)
+//   - Important Contacts பக்கம் முழுவதும் (Phones/Emails/Links)
+//   - Our Website (WhatsApp Group தவிர்த்து)
+// Trustees Accounts பக்கம் மற்றும் Trustees உறுப்பினர் பட்டியல் masters-க்கு இல்லை.
+const MASTER_SITE = {
+  dashboardUrl: DASHBOARD_URL,
+  quick: SITE.quick.filter((i) => !i.dash),
+  accounts: [],
+  phones: SITE.phones,
+  emails: SITE.emails,
+  links: SITE.links,
+  more: SITE.more.filter((i) => i.en === "Our Website")
+};
+
+module.exports = { SITE, MASTER_SITE };

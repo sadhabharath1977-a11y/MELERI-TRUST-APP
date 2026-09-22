@@ -58,8 +58,8 @@
   <div class="section">
     <div class="section-title"><h2 data-en="🧭 Main Sections">🧭 முக்கிய பகுதிகள்</h2></div>
     <div class="list">
-      <a class="row" href="#accounts" data-page="accounts"><div class="ico">₹</div><div><b data-en="Income &amp; Expense Accounts">வரவு செலவு கணக்கு</b><small>Income / Expense Entry</small></div><span class="go">›</span></a>
-      <a class="row" href="#trustees" data-page="trustees"><div class="ico">👥</div><div><b data-en="Trustees">அறங்காவலர்கள்</b><small>Contacts, Folder, WhatsApp, Call</small></div><span class="go">›</span></a>
+      <a class="row" href="#accounts" data-page="accounts" data-trustee-only><div class="ico">₹</div><div><b data-en="Income &amp; Expense Accounts">வரவு செலவு கணக்கு</b><small>Income / Expense Entry</small></div><span class="go">›</span></a>
+      <a class="row" href="#trustees" data-page="trustees" data-trustee-only><div class="ico">👥</div><div><b data-en="Trustees">அறங்காவலர்கள்</b><small>Contacts, Folder, WhatsApp, Call</small></div><span class="go">›</span></a>
       <a class="row" href="#service" data-page="service"><div class="ico">✨</div><div><b data-en="Service Details">சேவை விவரம்</b><small>Trust Service Statistics</small></div><span class="go">›</span></a>
       <a class="row" href="#contacts" data-page="contacts"><div class="ico">📞</div><div><b data-en="Important Contacts &amp; Links">முக்கிய தொடர்புகள் &amp; இணைப்புகள்</b><small>Call, Email, Links</small></div><span class="go">›</span></a>
     </div>
@@ -102,14 +102,15 @@
 <section id="more" class="page">
   <div class="hero"><h1 data-en="More ☰">மேலும் ☰</h1><p data-en="Other important links of the trust.">அறக்கட்டளையின் பிற முக்கிய இணைப்புகள்.</p></div>
   <div class="section"><div class="list" id="moreList"></div></div>
+  <div id="roleSwitch" class="section hidden"></div>
   <div id="adminPanel" class="section hidden"></div>
   <div class="quote">MELERI MVKM TRUST • Trustees App<br><small>App-style multi-page navigation • Mobile friendly • PWA ready</small></div>
 </section>
 
 <nav class="bottom" aria-label="Main">
   <button class="nav" type="button" data-page="home"><span>⌂</span><span data-en="Home">முகப்பு</span></button>
-  <button class="nav" type="button" data-page="trustees"><span>👥</span><span data-en="Trustees">அறங்காவலர்கள்</span></button>
-  <button class="nav" type="button" data-page="accounts"><span>₹</span><span data-en="Accounts">கணக்கு</span></button>
+  <button class="nav" type="button" data-page="trustees" data-trustee-only><span>👥</span><span data-en="Trustees">அறங்காவலர்கள்</span></button>
+  <button class="nav" type="button" data-page="accounts" data-trustee-only><span>₹</span><span data-en="Accounts">கணக்கு</span></button>
   <button class="nav" type="button" data-page="contacts"><span>📞</span><span data-en="Contacts">தொடர்புகள்</span></button>
   <button class="nav" type="button" data-page="more"><span>☰</span><span data-en="More">மேலும்</span></button>
 </nav>
