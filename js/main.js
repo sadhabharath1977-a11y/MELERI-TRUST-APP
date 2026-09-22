@@ -3,15 +3,37 @@ import { $, showToast } from "./util.js";
 import { t, initLang, onLangChange, curLang } from "./i18n.js";
 import { api, setUnauthorizedHandler } from "./api.js";
 import { initAuth, showChecking, showLogin, showRetry, hideLock } from "./auth.js";
-import { renderSite, renderTrustees, renderUserChip, renderAdminPanel, closeDropdown } from "./views.js";
+import { renderSite, renderTrustees, renderUserChip, renderAdminPanel, renderRoleSwitch, closeDropdown } from "./views.js";
 import { loadStats, renderStats, clearStats, dashboardOpen } from "./stats.js";
 
-let state = null; // what the server returned after login: { email, isAdmin, trustees, site }
+let state = null; // what the server returned after login: { email, isAdmin, role, trustees, site, masterSite? }
+let previewRole = null; // admin only: lets the admin preview "trustee" or "master"; null = own role (trustee view)
+
+// The role actually shown right now: admin previews trustee/master; everyone else always sees their own role.
+function effectiveRole() {
+  if (!state) return null;
+  if (state.isAdmin) return previewRole || "trustee";
+  return state.role;
+}
+function isMasterView() {
+  return effectiveRole() === "master";
+}
+// Hides bottom-nav buttons and home-page rows marked data-trustee-only whenever a master/ஆசிரியர் is viewing.
+function applyRoleVisibility() {
+  const hide = isMasterView();
+  document.querySelectorAll("[data-trustee-only]").forEach((el) => el.classList.toggle("hidden", hide));
+}
+function setPreviewRole(role) {
+  previewRole = role === "master" ? "master" : null;
+  renderAll(); // re-renders the role-switch buttons too
+  showPage(location.hash.slice(1), false); // bounce off a hidden page if the new view can't see it
+}
 
 // ---------- navigation (Back button works; no full reloads) ----------
 const PAGES = ["home", "trustees", "accounts", "service", "contacts", "more"];
 function showPage(id, animate) {
   if (!PAGES.includes(id)) id = "home";
+  if (isMasterView() && (id === "trustees" || id === "accounts")) id = "home";
   document.querySelectorAll(".page").forEach((p) => {
     const active = p.id === id;
     p.classList.toggle("active", active);
@@ -70,7 +92,7 @@ function initDashboardLinks() {
     if (/Android/i.test(navigator.userAgent)) {
       // Opens the installed Google Sheets app directly. (Android only - iPhone/PC get the normal link.)
       const path = url.replace(/^https:\/\//, "").split("#")[0];
-      location.href = "intent://" + path + "#Intent;scheme=https;package=com.google.android.apps.docs.editors.sheets;end";
+      location.href = "intent://" + path + "#Intent;scheme=https;package=com.google.android.apps.docs.editors.sheets;S.browser_fallback_url=" + encodeURIComponent(url) + ";end";
     } else {
       window.open(url, "_blank", "noopener,noreferrer");
     }
@@ -80,11 +102,17 @@ function initDashboardLinks() {
 // ---------- after login ----------
 function renderAll() {
   if (!state) return;
-  renderSite(state.site);
-  renderTrustees(state.trustees);
+  const role = effectiveRole();
+  const site = role === "master" && state.masterSite ? state.masterSite : state.site;
+  renderSite(site, role);
+  renderTrustees(role === "master" ? [] : state.trustees);
   applySearch();
+  applyRoleVisibility();
   renderUserChip(state, logout);
-  if (state.isAdmin && !$("#adminPanel").classList.contains("hidden")) renderAdminPanel(state);
+  if (state.isAdmin) {
+    renderRoleSwitch(role, setPreviewRole);
+    if (!$("#adminPanel").classList.contains("hidden")) renderAdminPanel(state);
+  }
   renderStats();
 }
 
@@ -92,7 +120,7 @@ function onAuthed(data) {
   state = data;
   hideLock();
   renderAll();
-  if (state.isAdmin) renderAdminPanel(state);
+  if (state.isAdmin) renderAdminPanel(state); // pre-populate the (hidden) admin list for when "More" is opened
   showPage(location.hash.slice(1), false);
   // Warm the stats cache when the phone is idle, so the Service page and Dashboard switch are instant.
   (window.requestIdleCallback || ((fn) => setTimeout(fn, 1500)))(() => loadStats());
@@ -110,6 +138,7 @@ async function logout() {
 function sessionEnded() {
   if (!state) return;
   state = null;
+  previewRole = null;
   clearStats();
   closeDropdown();
   showLogin(t("உள்நுழைவு காலாவதியாகிவிட்டது. மீண்டும் உள்நுழையவும்.", "Your session has ended. Please sign in again."));

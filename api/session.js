@@ -7,15 +7,19 @@
 // re-verified the token with Google and re-read the Blob store.
 const { ADMIN_EMAIL } = require("./_lib/config");
 const { verifyGoogleToken } = require("./_lib/googleAuth");
-const { isAllowed, authenticate } = require("./_lib/auth");
+const { isAllowed, authenticate, roleOf } = require("./_lib/auth");
 const { setSessionCookie, clearSessionCookie } = require("./_lib/token");
 const { noStore, send, clientIp, csrfOk } = require("./_lib/http");
 const { allow } = require("./_lib/rateLimit");
 const { TRUSTEES } = require("./_lib/trustees-data");
-const { SITE } = require("./_lib/site-data");
+const { SITE, MASTER_SITE } = require("./_lib/site-data");
 
 function bootstrap(s) {
-  return { authenticated: true, email: s.email, isAdmin: s.isAdmin, trustees: TRUSTEES, site: SITE };
+  const base = { authenticated: true, email: s.email, isAdmin: s.isAdmin, role: s.role };
+  // Admin always gets the full (trustee) view plus the master view, to preview/switch client-side.
+  if (s.isAdmin) return { ...base, trustees: TRUSTEES, site: SITE, masterSite: MASTER_SITE };
+  if (s.role === "master") return { ...base, trustees: [], site: MASTER_SITE };
+  return { ...base, trustees: TRUSTEES, site: SITE };
 }
 
 module.exports = async (req, res) => {
@@ -37,8 +41,10 @@ module.exports = async (req, res) => {
       const email = await verifyGoogleToken(req.body && req.body.idToken);
       if (!email) return send(res, 401, { allowed: false, error: "invalid or expired google token" });
       if (!(await isAllowed(email, { fresh: true }))) return send(res, 403, { allowed: false, email });
+      const isAdmin = email === ADMIN_EMAIL;
+      const role = isAdmin ? "admin" : await roleOf(email, { fresh: true });
       setSessionCookie(res, email);
-      return send(res, 200, bootstrap({ email, isAdmin: email === ADMIN_EMAIL }));
+      return send(res, 200, bootstrap({ email, isAdmin, role }));
     }
 
     if (req.method === "DELETE") {

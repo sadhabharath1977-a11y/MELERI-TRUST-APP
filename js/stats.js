@@ -5,7 +5,7 @@ import { t } from "./i18n.js";
 import { api } from "./api.js";
 
 const KEY = "meleri_stats_v1";
-const FRESH_MS = 2 * 60 * 1000;
+const FRESH_MS = 30 * 1000;
 const ICONS = [["தீட்சை", "⭐"], ["பிரம்மஞான", "🧘"], ["அருள்நிதி", "💚"], ["பேராசிரியர்", "🎓"], ["டிப்ளமோ", "📘"]];
 const iconFor = (label) => (ICONS.find(([k]) => label.includes(k)) || [0, "✨"])[1];
 

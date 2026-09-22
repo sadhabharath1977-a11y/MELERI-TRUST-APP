@@ -56,51 +56,22 @@ function loadGsi() {
   return gsiLoading;
 }
 
-// Google's button first appears as an UNSTYLED giant "G" until its own stylesheet arrives. We render it
-// off-screen and only reveal it once it has its proper size; meanwhile the person sees the normal
-// "verifying" spinner, so the ugly flash never shows.
-function revealWhenStyled(box, onTimeout) {
-  const started = Date.now();
-  (function check() {
-    const child = box.firstElementChild;
-    const height = box.getBoundingClientRect().height;
-    if (child && height >= 30 && height <= 90) {
-      box.classList.remove("pending");
-      show("#lockChecking", false);
-    } else if (Date.now() - started > 6000) {
-      box.classList.remove("pending");
-      box.innerHTML = "";
-      onTimeout();
-    } else {
-      requestAnimationFrame(check);
-    }
-  })();
-}
-
 export async function showLogin(message) {
-  const box = $("#gsiBtn");
   show("#lock", true);
+  show("#lockChecking", false);
   show("#retryBtn", false);
-  show("#lockChecking", true); // keep the calm spinner while Google's button prepares itself
-  box.innerHTML = "";
-  box.classList.add("pending");
   show("#gsiBtn", true);
   setError(message);
-  const failed = () => {
-    show("#gsiBtn", false);
-    showRetry(t("Google Sign-In load ஆகவில்லை. இணைய இணைப்பை சரிபார்த்து மீண்டும் முயற்சிக்கவும்.", "Google Sign-In failed to load. Check your internet connection and try again."), () => showLogin());
-  };
   try {
     await loadGsi();
     if (!gsiInitialised) {
       window.google.accounts.id.initialize({ client_id: CLIENT_ID, callback: handleCredential });
       gsiInitialised = true;
     }
-    window.google.accounts.id.renderButton(box, { theme: "filled_blue", size: "large", text: "signin_with", shape: "pill", width: 280 });
-    revealWhenStyled(box, failed);
+    window.google.accounts.id.renderButton($("#gsiBtn"), { theme: "filled_blue", size: "large", text: "signin_with", shape: "pill", width: 280 });
   } catch (e) {
-    box.classList.remove("pending");
-    failed();
+    show("#gsiBtn", false);
+    showRetry(t("Google Sign-In load ஆகவில்லை. இணைய இணைப்பை சரிபார்த்து மீண்டும் முயற்சிக்கவும்.", "Google Sign-In failed to load. Check your internet connection and try again."), () => showLogin());
   }
 }
 
