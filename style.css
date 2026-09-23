@@ -317,3 +317,26 @@ select:active{transform:scale(.99)}
   body{padding:24px}
   .app{height:calc(100vh - 48px);height:calc(100dvh - 48px);border-radius:32px;overflow:hidden;box-shadow:0 20px 60px rgba(15,50,35,.18);background:var(--bg)}
 }
+
+
+/* ===== PREMIUM 10/10 POLISH ===== */
+.lockbox::after{content:"SECURE TRUST WORKSPACE";display:block;margin:18px auto 0;color:#8a978f;font-size:8px;font-weight:800;letter-spacing:1.4px}
+.login-trust{display:flex;justify-content:center;flex-wrap:wrap;gap:6px;margin:14px 0 2px}
+.login-trust span{font-size:8.5px;font-weight:800;color:var(--green-700);background:var(--green-50);border:1px solid var(--green-100);padding:6px 8px;border-radius:999px}
+.welcome-strip{margin:14px 18px 2px;padding:12px 13px;border:1px solid var(--line);border-radius:18px;background:linear-gradient(135deg,#fff,var(--green-50));box-shadow:var(--shadow-sm);display:flex;align-items:center;justify-content:space-between;gap:10px}
+.welcome-strip>div{min-width:0;display:flex;flex-direction:column;gap:2px}
+.welcome-strip b{font-size:11.5px;color:var(--green-900);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.welcome-strip small{font-size:9px;color:var(--muted);font-weight:600}
+.welcome-dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:#2aa66a;box-shadow:0 0 0 4px rgba(42,166,106,.12);margin-right:6px;vertical-align:middle}
+.status-pill{flex:none;font-size:8px;font-weight:900;letter-spacing:.7px;color:var(--green-700);background:var(--green-100);padding:6px 8px;border-radius:999px}
+.app-version{position:absolute;left:50%;bottom:88px;transform:translateX(-50%);z-index:35;font-size:7.5px;font-weight:800;letter-spacing:.5px;color:#91a098;white-space:nowrap;pointer-events:none;opacity:.8}
+.tile{position:relative;overflow:hidden}
+.tile::after{content:"";position:absolute;width:72px;height:72px;border-radius:50%;right:-30px;bottom:-35px;background:rgba(36,165,106,.045);pointer-events:none}
+.row:active,.profile:active,.stat-card:active,.tile:active{will-change:transform}
+.top{isolation:isolate}
+.top::after{content:"";position:absolute;right:18px;bottom:8px;width:70px;height:2px;border-radius:2px;background:linear-gradient(90deg,transparent,rgba(255,255,255,.55));opacity:.8}
+.section-title h2{letter-spacing:.05px}
+@media(max-width:360px){.welcome-strip{margin-left:14px;margin-right:14px}.welcome-strip b{font-size:10.5px}.status-pill{display:none}.app-version{font-size:7px}}
+@media(prefers-reduced-motion:no-preference){.welcome-dot{animation:pulseDot 2.2s ease-in-out infinite}.status-pill{animation:softPulse 3s ease-in-out infinite}}
+@keyframes pulseDot{0%,100%{box-shadow:0 0 0 3px rgba(42,166,106,.10)}50%{box-shadow:0 0 0 6px rgba(42,166,106,.03)}}
+@keyframes softPulse{0%,100%{opacity:1}50%{opacity:.72}}

@@ -138,10 +138,26 @@ export function renderAdminPanel(state) {
     list.innerHTML =
       adminRow +
       members
-        .map(
-          (m) =>
-            '<div class="row admin-row"><div class="ico">👤</div><div><b>' + esc(m.email) + "</b><small>" + esc(roleLabel(m.role)) + '</small></div><button class="admin-remove" type="button" aria-label="Remove" data-email="' + esc(m.email) + '">✕</button></div>'
-        )
+        .map((m) => {
+          const deviceBadge = m.deviceId
+            ? '<span class="badge" title="' + esc(t("ஒரு Device-க்கு Lock ஆகியுள்ளது", "Locked to one device")) + '">📱</span>'
+            : "";
+          const resetBtn = m.deviceId
+            ? '<button class="admin-reset" type="button" aria-label="Reset device" data-email="' + esc(m.email) + '" title="' + esc(t("Device Reset", "Reset device")) + '">🔓</button>'
+            : "";
+          return (
+            '<div class="row admin-row"><div class="ico">👤</div><div><b>' +
+            esc(m.email) +
+            "</b><small>" +
+            esc(roleLabel(m.role)) +
+            "</small></div>" +
+            deviceBadge +
+            resetBtn +
+            '<button class="admin-remove" type="button" aria-label="Remove" data-email="' +
+            esc(m.email) +
+            '">✕</button></div>'
+          );
+        })
         .join("");
     list.querySelectorAll(".admin-remove").forEach((btn) => {
       btn.onclick = async () => {
@@ -151,6 +167,16 @@ export function renderAdminPanel(state) {
         const r = await api.admin.remove(email);
         if (r.ok) renderList(r.data.members);
         else setErr(failText(r, t("நீக்க முடியவில்லை", "Could not remove")));
+      };
+    });
+    list.querySelectorAll(".admin-reset").forEach((btn) => {
+      btn.onclick = async () => {
+        const email = btn.dataset.email;
+        if (!confirm(t(email + " -ன் Device Lock-ஐ அவிழ்க்கவா? அடுத்த login எந்த Device-லும் வேலை செய்யும்.", "Release " + email + "'s device lock? The next login will work from any device."))) return;
+        setErr("");
+        const r = await api.admin.resetDevice(email);
+        if (r.ok) renderList(r.data.members);
+        else setErr(failText(r, t("முடியவில்லை", "Could not reset")));
       };
     });
   }
