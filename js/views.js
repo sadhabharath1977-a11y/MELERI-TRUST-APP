@@ -105,7 +105,7 @@ export function renderRoleSwitch(previewRole, onSwitch) {
   const isMaster = previewRole === "master";
   host.innerHTML =
     '<div class="section-title"><h2>👁️ ' + esc(t("பார்வை", "View")) + "</h2><span>Preview</span></div>" +
-    '<div class="admin-add"><button id="viewTrusteeBtn" class="unlock" type="button"' + (isMaster ? "" : " disabled") + ">👥 " + esc(t("அறங்காவலர் View", "Trustee View")) + "</button>" +
+    '<div class="role-switch"><button id="viewTrusteeBtn" class="unlock" type="button"' + (isMaster ? "" : " disabled") + ">👥 " + esc(t("அறங்காவலர் View", "Trustee View")) + "</button>" +
     '<button id="viewMasterBtn" class="unlock" type="button"' + (isMaster ? " disabled" : "") + ">🎓 " + esc(t("ஆசிரியர்/Master View", "Master View")) + "</button></div>";
   $("#viewTrusteeBtn").onclick = () => onSwitch("trustee");
   $("#viewMasterBtn").onclick = () => onSwitch("master");
