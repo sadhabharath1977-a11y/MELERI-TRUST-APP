@@ -4,7 +4,7 @@
 // mixed old/new files; slow or missing network still starts from cache);
 // photos & icons = cache-first (their file names are content hashes); fonts = stale-while-revalidate;
 // /api/* is NEVER cached (login and member data must always come live from the server).
-const VERSION = "v24";
+const VERSION = "v23";
 const SHELL_CACHE = "meleri-shell-" + VERSION;
 const IMG_CACHE = "meleri-img-" + VERSION;
 const FONT_CACHE = "meleri-fonts-v1";

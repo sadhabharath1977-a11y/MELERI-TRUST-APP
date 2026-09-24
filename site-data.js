@@ -26,7 +26,7 @@ const SITE = {
     { ta: "TRL ஜோன் EO", en: "TRL Zone EO", tel: "918838074336", show: "88380 74336" },
     { ta: "WCSC தலைமை அலுவலகம்", en: "WCSC Head Office", tel: "917904402887", show: "79044 02887" },
     { ta: "அளியார் கோர்ஸ் புக்கிங்", en: "Aliyar Course Booking", tel: "916379282565", show: "63792 82565" },
-    { ta: "அளியார் அலுவலகம்", en: "Aliyar Office", tel: "917598238733", show: "07598 238733" },
+    { ta: "அளியார் அலுவலகம்", en: "Aliyar Office", tel: "917598238733", show: "75982 38733" },
     { ta: "ஸ்மார்ட் அலுவலகம்", en: "Smart Office", tel: "919488947444", show: "94889 47444" },
     { ta: "விஷன் அலுவலகம்", en: "Vision Office", tel: "919442124234", show: "94421 24234" },
     { ta: "அளியார் IT அலுவலகம்", en: "Aliyar IT Office", tel: "918903488633", show: "89034 88633" }
@@ -44,7 +44,7 @@ const SITE = {
   ],
 
   more: [
-    { icon: "💬", ta: "அறக்கட்டளை WhatsApp குரூப்", en: "Trust WhatsApp Group", sub: "Group Communication", url: "https://chat.whatsapp.com/FZW3r2FpF3YL75mOniOW9h?s=sh&p=a&mlu=4&ilr=4" },
+    { icon: "💬", ta: "அறக்கட்டளை WhatsApp குரூப்", en: "Trust WhatsApp Group", sub: "Group Communication", url: "https://chat.whatsapp.com/FZW3r2FpF3YL75mOniOW9h" },
     { icon: "🌐", ta: "எங்கள் இணையதளம்", en: "Our Website", sub: "Our Website", url: "https://meleriskyyoga.netlify.app/" }
   ]
 };
