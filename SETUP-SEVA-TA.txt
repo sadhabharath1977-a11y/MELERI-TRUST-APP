@@ -1,0 +1,23 @@
+சேவைப் பதிவு - அமைப்பு (ஒரே ஒருமுறை செய்தால் போதும்)
+=====================================================
+படி 1. GitHub: இந்த ZIP-ஐ extract செய்து, உள்ள எல்லா கோப்புகளையும் GitHub-ல் upload செய்யவும் (பழையவற்றை மாற்றும்).
+
+படி 2. Google Sheet:
+  a) MELERI-SEVA-SHEET.xlsx கோப்பை Google Drive-ல் upload செய்து, திறந்து "Open with Google Sheets" ஆக்கவும்.
+  b) "பெயர்கள்" tab-ல் A2 முதல் சேவை செய்பவர்கள் (ஆசிரியர்கள், அறங்காவலர்கள்) பெயர்களையும், "இடங்கள்" tab-ல் A2 முதல் இடங்களையும் எழுதவும்.
+  c) "சேவைகள்" tab-ல் சேவை பெயர்/புள்ளிகளை மாற்றலாம். (புள்ளி மாற்றம் இனி வரும் பதிவுகளுக்கு மட்டும்.)
+
+படி 3. Apps Script:
+  a) அதே Sheet-ல்: Extensions > Apps Script.
+  b) உள்ள குறியீட்டை அழித்து, apps-script/Code.gs கோப்பின் முழு உள்ளடக்கத்தை ஒட்டவும். Save.
+  c) இடப்பக்கம் Project Settings (⚙) > Script properties > Add: Property = KEY, Value = நீங்களே நீண்ட random எழுத்துகள் (எ.கா. 30 எழுத்து). இதை நோட் செய்து வைக்கவும்.
+  d) மேலே Deploy > New deployment > Select type: Web app. Execute as = Me. Who has access = Anyone. Deploy. Authorize செய்யவும்.
+  e) கிடைக்கும் "Web app URL" (…/exec) ஐ நகலெடுக்கவும்.
+
+படி 4. Vercel > Project > Settings > Environment Variables:
+  SERVICE_SCRIPT_URL = மேலே நகலெடுத்த URL
+  SERVICE_SCRIPT_KEY = படி 3c-ல் வைத்த அதே KEY
+  பிறகு Deployments > கடைசி deployment > Redeploy.
+
+முடிந்தது. அறங்காவலர், ஆசிரியர், Admin யாரும் login செய்து "சேவை விவரம்" பக்கத்தில் "ஆசிரியர்கள் சேவைப் பதிவு" திறக்கவும்.
+Code.gs மாற்றினால்: Deploy > Manage deployments > Edit > New version.

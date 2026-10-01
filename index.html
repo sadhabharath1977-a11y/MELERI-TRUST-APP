@@ -23,6 +23,7 @@
 <link rel="modulepreload" href="/js/auth.js">
 <link rel="modulepreload" href="/js/views.js">
 <link rel="modulepreload" href="/js/stats.js">
+<link rel="modulepreload" href="/js/seva.js">
 </head>
 <body>
 
@@ -63,6 +64,7 @@
       <a class="row" href="#accounts" data-page="accounts" data-trustee-only><div class="ico">₹</div><div><b data-en="Income &amp; Expense Accounts">வரவு செலவு கணக்கு</b><small>Income / Expense Entry</small></div><span class="go">›</span></a>
       <a class="row" href="#trustees" data-page="trustees" data-trustee-only><div class="ico">👥</div><div><b data-en="Trustees">அறங்காவலர்கள்</b><small>Contacts, Folder, WhatsApp, Call</small></div><span class="go">›</span></a>
       <a class="row" href="#service" data-page="service"><div class="ico">✨</div><div><b data-en="Service Details">சேவை விவரம்</b><small>Trust Service Statistics</small></div><span class="go">›</span></a>
+      <a class="row hidden" href="#seva" data-page="seva" data-seva><div class="ico">🪔</div><div><b data-en="Masters' Service Record">ஆசிரியர்கள் சேவைப் பதிவு</b><small>Service Log &amp; Charts</small></div><span class="go">›</span></a>
       <a class="row" href="#contacts" data-page="contacts"><div class="ico">📞</div><div><b data-en="Important Contacts &amp; Links">முக்கிய தொடர்புகள் &amp; இணைப்புகள்</b><small>Call, Email, Links</small></div><span class="go">›</span></a>
     </div>
   </div>
@@ -82,6 +84,7 @@
 
 <section id="service" class="page">
   <div class="hero"><h1 data-en="Service Details ✨">சேவை விவரம் ✨</h1><p data-en="Statistics of the trust's spiritual service activities.">அறக்கட்டளையின் ஆன்மீக சேவைப் பணிகளின் புள்ளிவிவரம்.</p></div>
+  <div class="section"><div class="list"><a class="row hidden" href="#seva" data-page="seva" data-seva><div class="ico">🪔</div><div><b data-en="Masters' Service Record">ஆசிரியர்கள் சேவைப் பதிவு</b><small>Service Log &amp; Charts</small></div><span class="go">›</span></a></div></div>
   <div class="section">
     <div class="section-title"><h2 data-en="📜 Service So Far">📜 இதுவரையிலான சேவை</h2><span>Cumulative</span></div>
     <div class="stat-grid" id="svcTotal"><div class="stat-card skeleton"></div><div class="stat-card skeleton"></div><div class="stat-card skeleton"></div><div class="stat-card skeleton"></div></div>
@@ -91,6 +94,13 @@
     <div class="stat-grid" id="svcYear"><div class="stat-card skeleton"></div><div class="stat-card skeleton"></div><div class="stat-card skeleton"></div><div class="stat-card skeleton"></div></div>
   </div>
   <div class="quote" id="svcNote" data-en="✨ Service continues by the Guru's grace. (Figures shown in Tamil, from the shared sheet.)">✨ குருவின் அருளால் தொடரும் சேவை.</div>
+</section>
+
+<section id="seva" class="page">
+  <div class="hero"><h1 data-en="Service Record 🪔">சேவைப் பதிவு 🪔</h1><p data-en="Offered as selfless service, not for money. Thank you, Masters." >பணத்திற்காக அல்ல, தொண்டாகச் செய்யும் சேவையின் பதிவு. நன்றி ஆசிரியர்களே 🙏</p></div>
+  <div id="svHero" class="sv-hero"></div>
+  <div class="section"><div class="section-title"><h2 data-en="✍️ New Entry">✍️ புதிய பதிவு</h2></div><div id="svForm" class="sv-form"></div></div>
+  <div class="section"><div class="section-title"><h2 data-en="📊 Summary">📊 சுருக்கம்</h2><span id="svYearWrap"></span></div><div id="svSummary"></div></div>
 </section>
 
 <section id="contacts" class="page">

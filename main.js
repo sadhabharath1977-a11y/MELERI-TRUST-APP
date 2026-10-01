@@ -4,6 +4,7 @@ import { t, initLang, onLangChange, curLang } from "./i18n.js";
 import { api, setUnauthorizedHandler } from "./api.js";
 import { initAuth, showChecking, showLogin, showRetry, hideLock } from "./auth.js";
 import { renderSite, renderTrustees, renderUserChip, renderAdminPanel, renderRoleSwitch, closeDropdown } from "./views.js";
+import { initSeva, loadSeva, renderSeva, clearSeva } from "./seva.js";
 import { loadStats, renderStats, clearStats, dashboardOpen } from "./stats.js";
 
 let state = null; // what the server returned after login: { email, isAdmin, role, trustees, site, masterSite? }
@@ -31,6 +32,7 @@ function setBilingual(el, ta, en) {
 function applyRoleVisibility() {
   const master = isMasterView();
   document.querySelectorAll("[data-trustee-only]").forEach((el) => el.classList.toggle("hidden", master));
+  document.querySelectorAll("[data-seva]").forEach((el) => el.classList.toggle("hidden", !sevaAllowed()));
   const nav = $(".bottom");
   if (nav) nav.classList.toggle("nav-3", master);
   setBilingual(
@@ -51,10 +53,12 @@ function setPreviewRole(role) {
 }
 
 // ---------- navigation (Back button works; no full reloads) ----------
-const PAGES = ["home", "trustees", "accounts", "service", "contacts", "more"];
+const PAGES = ["home", "trustees", "accounts", "service", "seva", "contacts", "more"];
+const sevaAllowed = () => !!state; // every logged-in member: trustees, masters and admin
 function showPage(id, animate) {
   if (!PAGES.includes(id)) id = "home";
   if (isMasterView() && (id === "trustees" || id === "accounts")) id = "home";
+  if (id === "seva" && !sevaAllowed()) id = "home";
   document.querySelectorAll(".page").forEach((p) => {
     const active = p.id === id;
     p.classList.toggle("active", active);
@@ -74,6 +78,7 @@ function showPage(id, animate) {
     else n.removeAttribute("aria-current");
   });
   if (id === "service" && state) loadStats();
+  if (id === "seva" && state) loadSeva();
 }
 function go(id) {
   if (location.hash !== "#" + id) history.pushState(null, "", "#" + id);
@@ -135,6 +140,7 @@ function renderAll() {
     if (!$("#adminPanel").classList.contains("hidden")) renderAdminPanel(state);
   }
   renderStats();
+  renderSeva();
 }
 
 function onAuthed(data) {
@@ -150,6 +156,7 @@ function onAuthed(data) {
 async function logout() {
   await api.logout();
   clearStats();
+  clearSeva();
   try {
     if (window.google && window.google.accounts) window.google.accounts.id.disableAutoSelect();
   } catch (e) {}
@@ -161,6 +168,7 @@ function sessionEnded() {
   state = null;
   previewRole = null;
   clearStats();
+  clearSeva();
   closeDropdown();
   showLogin(t("உள்நுழைவு காலாவதியாகிவிட்டது. மீண்டும் உள்நுழையவும்.", "Your session has ended. Please sign in again."));
 }
@@ -193,6 +201,7 @@ setUnauthorizedHandler(sessionEnded);
 initLang();
 onLangChange(renderAll);
 initNav();
+initSeva();
 initDashboardLinks();
 const search = $("#memberSearch");
 if (search) search.addEventListener("input", applySearch);

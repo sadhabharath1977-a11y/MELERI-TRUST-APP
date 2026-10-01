@@ -1,29 +1,60 @@
 "use strict";
-// Service statistics (from the published Google Sheet), cached on the server. Login required.
-const { ADMIN_EMAIL } = require("./_lib/config");
-const { authenticate } = require("./_lib/auth");
-const { getStats } = require("./_lib/stats");
-const { send } = require("./_lib/http");
+// Service-statistics sheet -> compact JSON. Parsed on the server, cached for a couple of minutes
+// and shared by all users, so the browser no longer downloads and parses the Google Sheet itself.
+const { parseCSV } = require("./csv");
+const { STATS_CSV_URL } = require("./config");
 
-module.exports = async (req, res) => {
-  if (!ADMIN_EMAIL) return send(res, 500, { error: "config", detail: "ADMIN_EMAIL" });
-  if (req.method !== "GET") {
-    res.setHeader("Allow", "GET");
-    return send(res, 405, { error: "method not allowed" });
+const CACHE_MS = 30 * 1000;
+let cache = { at: 0, data: null };
+let inflight = null;
+
+// The first cell of the sheet doubles as an on/off switch: text starting with "OFF" means the
+// accounts are being updated and the dashboard should not be opened.
+function parseStats(text) {
+  const clean = String(text || "").replace(/^\uFEFF/, "");
+  const open = !clean.trim().toUpperCase().startsWith("OFF");
+  const rows = parseCSV(clean);
+  const headerIdx = rows.findIndex((r) => r.some((c) => c.includes("பிரிவு")));
+  if (headerIdx < 0) return { open, labels: [], total: null, year: null };
+  const header = rows[headerIdx];
+  const body = rows.slice(headerIdx + 1);
+  const totalRow = body.find((r) => r[0] && r[0].includes("இதுவரை"));
+  const yearRow = body.find((r) => r[0] && (r[0].includes("இந்த ஆண்டு") || r[0].includes("நடப்பாண்டு")));
+  const cols = [];
+  for (let i = 1; i < header.length; i++) if (header[i]) cols.push(i);
+  const pick = (row) => (row ? cols.map((i) => row[i] || "0") : null);
+  return { open, labels: cols.map((i) => header[i]), total: pick(totalRow), year: pick(yearRow) };
+}
+
+async function fetchStats() {
+  const url = STATS_CSV_URL + (STATS_CSV_URL.includes("?") ? "&" : "?") + "_=" + Date.now();
+  const r = await fetch(url, { cache: "no-store", signal: AbortSignal.timeout(6000) });
+  if (!r.ok) throw new Error("sheet fetch failed: " + r.status);
+  return parseStats(await r.text());
+}
+
+async function getStats() {
+  if (cache.data && Date.now() - cache.at < CACHE_MS) return cache.data;
+  if (!inflight) {
+    inflight = fetchStats()
+      .then((data) => {
+        cache = { at: Date.now(), data };
+        return data;
+      })
+      .catch((e) => {
+        if (cache.data) return cache.data; // serve the last good copy if Google is unreachable
+        throw e;
+      })
+      .finally(() => {
+        inflight = null;
+      });
   }
-  try {
-    const s = await authenticate(req);
-    if (!s) {
-      res.setHeader("Cache-Control", "no-store");
-      return send(res, 401, { error: "not logged in" });
-    }
-    const data = await getStats();
-    // Private (never shared/CDN) but reusable by the browser for a minute.
-    res.setHeader("Cache-Control", "private, max-age=15");
-    return send(res, 200, data);
-  } catch (e) {
-    console.error("stats error:", e && e.message ? e.message : e);
-    res.setHeader("Cache-Control", "no-store");
-    return send(res, 502, { error: "stats unavailable" });
-  }
-};
+  return inflight;
+}
+
+function _resetForTests() {
+  cache = { at: 0, data: null };
+  inflight = null;
+}
+
+module.exports = { getStats, parseStats, _resetForTests };
