@@ -24,6 +24,9 @@ const STATS_CSV_URL = String(
     "https://docs.google.com/spreadsheets/d/e/2PACX-1vT2Hhw3RiD-YHcQfE_V_rc_pH-B9cubbV_Q4CzP6vhPPXSofSp-MjZOVkD8xb-CtmMvhuNddJGqPOs6/pub?gid=1803561821&single=true&output=csv"
 ).trim();
 
+const SERVICE_SCRIPT_URL = String(process.env.SERVICE_SCRIPT_URL || "").trim();
+const SERVICE_SCRIPT_KEY = String(process.env.SERVICE_SCRIPT_KEY || "").trim();
+
 const SESSION_TTL_SECONDS = 7 * 24 * 60 * 60; // 7 days (access is re-checked on every request)
 
-module.exports = { GOOGLE_CLIENT_ID, ADMIN_EMAIL, STATS_CSV_URL, SESSION_TTL_SECONDS };
+module.exports = { GOOGLE_CLIENT_ID, ADMIN_EMAIL, STATS_CSV_URL, SESSION_TTL_SECONDS, SERVICE_SCRIPT_URL, SERVICE_SCRIPT_KEY };

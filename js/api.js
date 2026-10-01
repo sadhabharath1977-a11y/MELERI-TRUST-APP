@@ -29,6 +29,10 @@ export const api = {
   login: (idToken) => request("POST", "/api/session", { idToken }),
   logout: () => request("DELETE", "/api/session"),
   stats: () => request("GET", "/api/stats"),
+  seva: {
+    data: (year) => request("GET", "/api/service?year=" + encodeURIComponent(year || "")),
+    add: (body) => request("POST", "/api/service", body)
+  },
   admin: {
     list: () => request("GET", "/api/admin-emails"),
     add: (email, role) => request("POST", "/api/admin-emails", { email, role }),
