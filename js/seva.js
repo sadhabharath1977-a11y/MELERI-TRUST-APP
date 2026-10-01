@@ -21,6 +21,8 @@ let loading = false;
 let failed = false;
 let inflight = null;
 let f = { date: "", name: "", place: "", ids: [] };
+let pend = null; // { sig, rid }: the one-time save number; kept while the same entry is being retried
+const newRid = () => (window.crypto && crypto.randomUUID ? crypto.randomUUID() : Date.now().toString(36) + Math.random().toString(36).slice(2, 12) + "xx");
 
 const readCache = (y) => {
   try {
@@ -174,14 +176,23 @@ export function renderSeva() {
 async function save() {
   if (busy) return;
   if (!f.name || !f.place || !f.ids.length) return showToast(t("பெயர், இடம், சேவை மூன்றையும் தேர்ந்தெடுக்கவும்", "Please select name, place and service"));
+  const date = f.date || today();
+  const sig = [date, f.name, f.place, [...f.ids].sort().join(",")].join("|");
+  if (!pend || pend.sig !== sig) pend = { sig, rid: newRid() }; // same entry => same number => the server saves it only once
   busy = true;
   renderSeva();
   const picked = data.services.filter((s) => f.ids.includes(s.id));
-  const r = await api.seva.add({ date: f.date || today(), name: f.name, place: f.place, ids: f.ids });
+  let r;
+  for (let i = 0; i < 3; i++) {
+    r = await api.seva.add({ date, name: f.name, place: f.place, ids: f.ids, rid: pend.rid });
+    if (r.ok || (r.status > 0 && r.status < 500)) break;
+    await wait(1500); // slow/unconfirmed: try again with the SAME number (safe, cannot double-save)
+  }
   busy = false;
   if (r.ok) {
+    pend = null;
     // Show the new totals immediately (no waiting for a reload), then confirm with the Sheet quietly.
-    if (data.year === (f.date || today()).slice(0, 4)) {
+    if (data.year === date.slice(0, 4)) {
       picked.forEach((s) => {
         let row = data.agg.find((a) => a[0] === f.name && a[1] === s.id);
         if (!row) data.agg.push((row = [f.name, s.id, s.name, 0, 0]));
@@ -199,7 +210,7 @@ async function save() {
     renderSeva();
     showToast(
       r.status === 0 || r.status >= 500
-        ? t("சேமிப்பு உறுதியாகவில்லை. Sheet-ல் பதிவு வந்ததா என்று பார்த்து, இல்லையென்றால் மீண்டும் சேமிக்கவும்.", "Could not confirm the save. Check the Sheet, and save again only if it is missing.")
+        ? t("சேமிப்பு உறுதியாகவில்லை. மீண்டும் 'சேமி' தொடவும்; இரட்டிப்பாகாது.", "Could not confirm the save. Tap Save again; it will not be saved twice.")
         : r.data.error || t("சேமிக்க முடியவில்லை", "Could not save")
     );
   }

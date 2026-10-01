@@ -33,7 +33,7 @@ module.exports = async (req, res) => {
       if (!csrfOk(req)) return send(res, 403, { error: "bad request origin" });
       if (!allow("seva:" + s.email, 30, 60 * 1000)) return send(res, 429, { error: "too many requests" });
       const b = req.body || {};
-      const out = await callScript({ action: "add", date: b.date, name: b.name, place: b.place, ids: Array.isArray(b.ids) ? b.ids.slice(0, 20) : [], by: s.email });
+      const out = await callScript({ action: "add", date: b.date, name: b.name, place: b.place, ids: Array.isArray(b.ids) ? b.ids.slice(0, 20) : [], rid: typeof b.rid === "string" ? b.rid.slice(0, 64) : "", by: s.email });
       cache = {};
       return send(res, 200, out);
     }

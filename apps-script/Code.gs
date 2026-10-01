@@ -45,12 +45,21 @@ function add_(b) {
   const byId = {}; services_().forEach(s => { if (s.active) byId[s.id] = s; });
   const ids = (b.ids || []).filter((x, i, a) => byId[x] && a.indexOf(x) === i);
   if (!ids.length) throw new Error('சேவையைத் தேர்ந்தெடுக்கவும்');
+  // rid = one-time save number made by the app. The same rid arriving twice (a retry after a slow reply) is NOT saved again.
+  const rid = /^[A-Za-z0-9-]{8,64}$/.test(String(b.rid || '')) ? String(b.rid) : '';
   const lock = LockService.getScriptLock(); lock.waitLock(10000);
   try {
-    const log = sh_(S.log), r = log.getLastRow() + 1, now = new Date();
-    const vals = ids.map(id => [now, d, b.name, b.place, id, byId[id].name, byId[id].points, String(b.by || '')]);
+    const log = sh_(S.log), n = log.getLastRow() - 1;
+    if (rid && n > 0) {
+      const rids = log.getRange(2, 9, n, 1).getValues(), pts = log.getRange(2, 7, n, 1).getValues();
+      let cnt = 0, sum = 0;
+      rids.forEach((x, i) => { if (String(x[0]) === rid) { cnt++; sum += Number(pts[i][0]) || 0; } });
+      if (cnt) return { ok: true, duplicate: true, count: cnt, points: sum };
+    }
+    const r = log.getLastRow() + 1, now = new Date();
+    const vals = ids.map(id => [now, d, b.name, b.place, id, byId[id].name, byId[id].points, String(b.by || ''), rid]);
     log.getRange(r, 2, vals.length, 1).setNumberFormat('@');
-    log.getRange(r, 1, vals.length, 8).setValues(vals);
+    log.getRange(r, 1, vals.length, 9).setValues(vals);
   } finally { lock.releaseLock(); }
   return { ok: true, count: ids.length, points: ids.reduce((a, id) => a + byId[id].points, 0) };
 }
