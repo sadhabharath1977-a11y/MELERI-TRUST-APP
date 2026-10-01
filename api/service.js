@@ -19,10 +19,15 @@ module.exports = async (req, res) => {
       const q = String((req.query && req.query.year) || "");
       const year = /^\d{4}$/.test(q) ? q : "";
       const c = cache[year];
-      if (c && Date.now() - c.at < 20000) return send(res, 200, c.data);
-      const data = await callScript({ action: "data", year });
-      cache[year] = { at: Date.now(), data };
-      return send(res, 200, data);
+      if (c && Date.now() - c.at < 30000) return send(res, 200, c.data);
+      try {
+        const data = await callScript({ action: "data", year });
+        cache[year] = { at: Date.now(), data };
+        return send(res, 200, data);
+      } catch (e) {
+        if (c) return send(res, 200, c.data); // Sheet is slow right now: show the last good copy instead of an error
+        throw e;
+      }
     }
     if (req.method === "POST") {
       if (!csrfOk(req)) return send(res, 403, { error: "bad request origin" });

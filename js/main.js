@@ -2,7 +2,7 @@
 import { $, showToast } from "./util.js";
 import { t, initLang, onLangChange, curLang } from "./i18n.js";
 import { api, setUnauthorizedHandler } from "./api.js";
-import { initAuth, showChecking, showLogin, showRetry, hideLock } from "./auth.js";
+import { initAuth, showChecking, showLogin, showRetry, hideLock, preloadGsi } from "./auth.js";
 import { renderSite, renderTrustees, renderUserChip, renderAdminPanel, renderRoleSwitch, closeDropdown } from "./views.js";
 import { initSeva, loadSeva, renderSeva, clearSeva } from "./seva.js";
 import { loadStats, renderStats, clearStats, dashboardOpen } from "./stats.js";
@@ -150,7 +150,11 @@ function onAuthed(data) {
   if (state.isAdmin) renderAdminPanel(state); // pre-populate the (hidden) admin list for when "More" is opened
   showPage(location.hash.slice(1), false);
   // Warm the stats cache when the phone is idle, so the Service page and Dashboard switch are instant.
-  (window.requestIdleCallback || ((fn) => setTimeout(fn, 1500)))(() => loadStats());
+  try { localStorage.setItem("mlr_seen", "1"); } catch (e) {}
+  (window.requestIdleCallback || ((fn) => setTimeout(fn, 1500)))(() => {
+    loadStats();
+    if (sevaAllowed()) loadSeva(true); // warm the service-record page too
+  });
 }
 
 async function logout() {
@@ -175,6 +179,9 @@ function sessionEnded() {
 
 async function boot() {
   showChecking();
+  let seen = false;
+  try { seen = !!localStorage.getItem("mlr_seen"); } catch (e) {}
+  if (!seen) preloadGsi(); // first visit on this phone: a login screen is coming, fetch Google's script in parallel
   const r = await api.session();
   if (r.ok && r.data.authenticated) return onAuthed(r.data);
   if (r.status === 401) return showLogin();

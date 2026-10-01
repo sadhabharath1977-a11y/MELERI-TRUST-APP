@@ -56,6 +56,9 @@ function loadGsi() {
   return gsiLoading;
 }
 
+// Start downloading Google's sign-in script early (used when we expect a login screen), so the button appears sooner.
+export const preloadGsi = () => loadGsi().catch(() => {});
+
 export async function showLogin(message) {
   show("#lock", true);
   show("#lockChecking", false);

@@ -9,6 +9,7 @@ async function request(method, path, body) {
     options.headers["Content-Type"] = "application/json";
     options.body = JSON.stringify(body);
   }
+  if (typeof AbortSignal !== "undefined" && AbortSignal.timeout) options.signal = AbortSignal.timeout(15000);
   let response;
   try {
     response = await fetch(path, options);
