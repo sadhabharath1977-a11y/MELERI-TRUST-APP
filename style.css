@@ -383,6 +383,8 @@ select:active{transform:scale(.99)}
 .sv-pdf button{flex:1;min-width:140px;font:inherit;font-weight:700;padding:10px;border:1px solid var(--green-600);border-radius:12px;background:#fff;color:var(--green-800)}
 @media print{
   @page{margin:14mm}
+  /* the app shell fixes html/body to one screen (height:100%, overflow:hidden): without this, only the FIRST page prints */
+  html,body{height:auto!important;width:auto!important;overflow:visible!important;position:static!important;background:#fff!important}
   body>*:not(#svPrint){display:none!important}
   #svPrint{display:block!important;color:#000;background:#fff;font-size:12pt}
   .pr-h{text-align:center;font-size:13pt;border-bottom:2px solid #126b45;padding-bottom:8px;margin-bottom:10px}
