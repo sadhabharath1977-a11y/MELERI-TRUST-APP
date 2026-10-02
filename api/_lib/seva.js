@@ -19,7 +19,7 @@ async function once(payload, ms) {
 
 async function callScript(payload) {
   if (!SERVICE_SCRIPT_URL || !SERVICE_SCRIPT_KEY) throw new Error("SERVICE_SCRIPT_URL / SERVICE_SCRIPT_KEY not set");
-  const isRead = payload.action === "data";
+  const isRead = payload.action !== "add";
   let data;
   try {
     data = await once(payload, isRead ? 5000 : 8500);

@@ -18,11 +18,13 @@ module.exports = async (req, res) => {
     if (req.method === "GET") {
       const q = String((req.query && req.query.year) || "");
       const year = /^\d{4}$/.test(q) ? q : "";
-      const c = cache[year];
+      const detail = String((req.query && req.query.detail) || "") === "1"; // full entry list for the PDF report
+      const ck = year + (detail ? ":d" : "");
+      const c = cache[ck];
       if (c && Date.now() - c.at < 30000) return send(res, 200, c.data);
       try {
-        const data = await callScript({ action: "data", year });
-        cache[year] = { at: Date.now(), data };
+        const data = await callScript({ action: detail ? "detail" : "data", year });
+        cache[ck] = { at: Date.now(), data };
         return send(res, 200, data);
       } catch (e) {
         if (c) return send(res, 200, c.data); // Sheet is slow right now: show the last good copy instead of an error

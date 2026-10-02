@@ -39,6 +39,7 @@ const writeCache = (d) => {
 };
 
 export function clearSeva() {
+  detail = null;
   data = null;
   year = "";
   sel = "";
@@ -131,6 +132,120 @@ function donut(items) {
   return '<div class="sv-donut"><svg viewBox="0 0 42 42" role="img">' + arcs + '</svg><div class="sv-leg">' + leg + "</div></div>";
 }
 
+// ---- PDF (print-to-PDF) report: Tamil text is shaped by the browser itself, so it always prints correctly ----
+const fmtDate = () => new Date().toLocaleDateString("en-GB");
+const dmy = (d) => d.slice(8, 10) + "-" + d.slice(5, 7) + "-" + d.slice(0, 4);
+// numFrom: columns from this index on are numbers (right-aligned)
+const tbl = (head, rows, foot, numFrom = 1) => {
+  const c = (i) => (i >= numFrom ? ' class="pr-n"' : "");
+  return (
+    '<table class="pr-t"><thead><tr>' + head.map((h, i) => "<th" + c(i) + ">" + esc(h) + "</th>").join("") + "</tr></thead><tbody>" +
+    rows.map((r) => "<tr>" + r.map((x, i) => "<td" + c(i) + ">" + esc(x) + "</td>").join("") + "</tr>").join("") +
+    (foot ? '<tr class="pr-f">' + foot.map((x, i) => "<td" + c(i) + ">" + esc(x) + "</td>").join("") + "</tr>" : "") + "</tbody></table>"
+  );
+};
+
+// rows: [date, name, place, service, points] for the year (from the Sheet)
+export function buildReport(person, rows) {
+  const mine = person ? rows.filter((r) => r[1] === person) : rows;
+  const sumP = (rs) => rs.reduce((a, r) => a + r[4], 0);
+  let html =
+    '<div class="pr-h"><b>MELERI MVKM TRUST</b><br>' + esc(t("சேவை விவரம்", "Service Record")) + " — " + esc(person || t("அனைவரும்", "Everyone")) + " — " + esc(data.year) +
+    "<br><small>" + esc(t("தயாரிக்கப்பட்ட தேதி", "Prepared on")) + ": " + fmtDate() + "</small></div>";
+  if (!mine.length) return html + "<p>" + esc(t("இன்னும் பதிவு இல்லை", "No entries yet")) + "</p>";
+  const SH = [t("சேவை", "Service"), t("எண்ணிக்கை", "Count"), t("புள்ளிகள்", "Points")];
+  const DH = [t("தேதி", "Date"), t("இடம்", "Place"), t("சேவைகள்", "Services"), t("புள்ளிகள்", "Points")];
+  const bySvc = (rs) => {
+    const m = {};
+    rs.forEach((r) => {
+      const e = (m[r[3]] = m[r[3]] || [r[3], 0, 0]);
+      e[1]++;
+      e[2] += r[4];
+    });
+    return Object.values(m).sort((x, y) => y[2] - x[2]).map((e) => [e[0], String(e[1]), String(e[2])]);
+  };
+  // one line per visit (same date + same place), services joined together
+  const visits = (rs) => {
+    const m = new Map();
+    rs.forEach((r) => {
+      const k = r[0] + "|" + r[2];
+      const e = m.get(k) || [dmy(r[0]), r[2], [], 0];
+      e[2].push(r[3]);
+      e[3] += r[4];
+      m.set(k, e);
+    });
+    return [...m.values()].map((e) => [e[0], e[1], e[2].join(", "), String(e[3])]);
+  };
+  const dateTable = (rs) => tbl(DH, visits(rs), [t("மொத்தம்", "Total"), "", String(rs.length) + " " + t("சேவைகள்", "services"), String(sumP(rs))], 3);
+  if (person) {
+    html += "<h3>" + esc(t("சேவை வாரியாகச் சுருக்கம்", "Summary by service")) + "</h3>" + tbl(SH, bySvc(mine), [t("மொத்தம்", "Total"), String(mine.length), String(sumP(mine))]);
+    html += '<div class="pr-c"><h3>' + esc(t("🥧 சேவை வாரியாக (புள்ளிகள்)", "🥧 By service (points)")) + "</h3>" + donut(bySvc(mine).map((e) => [e[0], Number(e[2])])) + "</div>";
+    html += "<h3>" + esc(t("தேதி, இடம் வாரியாக விவரம்", "Details by date and place")) + "</h3>" + dateTable(mine);
+  } else {
+    const names = [...new Set(mine.map((r) => r[1]))].sort((x, y) => x.localeCompare(y, "ta"));
+    html += "<h3>" + esc(t("நபர் வாரியாகச் சுருக்கம்", "Summary by person")) + "</h3>" +
+      tbl([t("பெயர்", "Name"), t("சேவைகள்", "Services"), t("புள்ளிகள்", "Points")], names.map((n, i) => {
+        const rs = mine.filter((r) => r[1] === n);
+        return [i + 1 + ".  " + n, String(rs.length), String(sumP(rs))];
+      }), [t("மொத்தம்", "Total"), String(mine.length), String(sumP(mine))]);
+    const perP = names.map((n) => [n, sumP(mine.filter((r) => r[1] === n))]);
+    html += '<div class="pr-c"><h3>' + esc(t("📊 நபர் வாரியாக (புள்ளிகள்)", "📊 By person (points)")) + "</h3>" + bars(perP, (n) => "c" + (n % 8)) + "</div>";
+    html += "<h3>" + esc(t("சேவை வாரியாக (அனைவரும்)", "By service (everyone)")) + "</h3>" + tbl(SH, bySvc(mine), null);
+    html += '<div class="pr-c"><h3>' + esc(t("🥧 சேவை வாரியாக (புள்ளிகள்)", "🥧 By service (points)")) + "</h3>" + donut(bySvc(mine).map((e) => [e[0], Number(e[2])])) + "</div>";
+    html += "<h3>" + esc(t("ஒவ்வொருவரின் தேதி, இடம் வாரியான விவரம்", "Each person: details by date and place")) + "</h3>";
+    names.forEach((n) => {
+      html += '<div class="pr-b"><h4>' + esc(n) + "</h4>" + dateTable(mine.filter((r) => r[1] === n)) + "</div>";
+    });
+  }
+  return html + '<p class="pr-k">' + esc(t("பணத்திற்காக அல்ல, தொண்டாகச் செய்த சேவை 🙏 வாழ்க வளமுடன்!", "Service offered selflessly, not for money 🙏 Vazhga Valamudan!")) + "</p>";
+}
+
+let detail = null; // { year, at, rows }
+let pdfBusy = false;
+const hasActivation = () => !(navigator.userActivation && navigator.userActivation.isActive === false);
+
+function printNow(person) {
+  let box = document.getElementById("svPrint");
+  if (!box) {
+    box = document.createElement("div");
+    box.id = "svPrint";
+    document.body.appendChild(box);
+  }
+  box.innerHTML = buildReport(person, detail.rows);
+  box.querySelectorAll(".bf").forEach((el) => (el.style.width = el.dataset.w + "%"));
+  const old = document.title;
+  document.title = "MELERI-Service-" + (person ? person.replace(/[^\p{L}\p{N}]+/gu, "-") : "All") + "-" + data.year; // becomes the PDF file name
+  const done = () => {
+    document.title = old;
+    box.innerHTML = "";
+    window.removeEventListener("afterprint", done);
+  };
+  window.addEventListener("afterprint", done);
+  try {
+    window.print();
+  } catch (e) {
+    done();
+    showToast(t("PDF திறக்க முடியவில்லை", "Could not open the PDF dialog"));
+  }
+}
+
+async function printReport(person) {
+  if (!data || pdfBusy) return;
+  if (detail && detail.year === data.year && Date.now() - detail.at < 60000) return printNow(person); // data ready: print inside the tap
+  pdfBusy = true;
+  showToast(t("PDF தயாராகிறது…", "Preparing the PDF…"));
+  let r = await api.seva.detail(data.year);
+  if (!r.ok) {
+    await wait(1200);
+    r = await api.seva.detail(data.year);
+  }
+  pdfBusy = false;
+  if (!r.ok) return showToast(t("விவரம் load ஆகவில்லை. மீண்டும் தொடவும்.", "Could not load the details. Please tap again."));
+  detail = { year: data.year, at: Date.now(), rows: r.data.rows };
+  if (hasActivation()) printNow(person);
+  else showToast(t("PDF தயார் ✅ மீண்டும் ஒருமுறை தொடவும்", "PDF is ready ✅ tap the button once more"));
+}
+
 function summaryHtml() {
   const agg = data.agg;
   const mine = sel ? agg.filter((a) => a[0] === sel) : agg;
@@ -147,6 +262,7 @@ function summaryHtml() {
   const teachers = Object.entries(byT).sort((a, b) => a[0].localeCompare(b[0], "ta"));
   return (
     '<label>' + esc(t("நபர்", "Person")) + '<select id="svSel" class="sv-sel">' + opts(data.names, sel, t("அனைவரும்", "Everyone")) + "</select></label>" +
+    '<div class="sv-pdf"><button id="svPdfAll" type="button">📄 ' + esc(t("அனைவரின் PDF", "Everyone's PDF")) + "</button>" + (sel ? '<button id="svPdfOne" type="button">📄 ' + esc(sel) + " — PDF</button>" : "") + "</div>" +
     '<div class="sv-total">' + esc(sel || t("அனைவரும்", "Everyone")) + " — " + sum(mine, 3) + " " + esc(t("சேவைகள்", "services")) + " · " + sum(mine, 4) + " " + esc(t("புள்ளிகள்", "points")) + "</div>" +
     '<div class="sv-list">' + (svcRows.map((r) => "<div><span>" + esc(r[0]) + "</span><b>" + r[2] + " × = " + r[1] + "</b></div>").join("") || "<small>" + esc(t("இன்னும் பதிவு இல்லை", "No entries yet")) + "</small>") + "</div>" +
     '<div class="section-title"><h2>' + esc(t("🥧 சேவை வாரியாக", "🥧 By service")) + "</h2></div>" + donut(svcRows) +
@@ -202,6 +318,7 @@ async function save() {
       writeCache(data);
     }
     f.ids = [];
+    detail = null; // the PDF must include this new entry
     const m = THANKS[Math.floor(Math.random() * THANKS.length)];
     showToast(t(m[0], m[1]) + " (+" + r.data.points + ")");
     renderSeva();
@@ -246,5 +363,7 @@ export function initSeva() {
   page.addEventListener("click", (e) => {
     if (e.target.closest("#svSave")) save();
     else if (e.target.closest("#svRetry")) loadSeva();
+    else if (e.target.closest("#svPdfAll")) printReport("");
+    else if (e.target.closest("#svPdfOne")) printReport(sel);
   });
 }

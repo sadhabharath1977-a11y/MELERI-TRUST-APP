@@ -15,7 +15,7 @@ function doPost(e) {
   try {
     const b = JSON.parse(e.postData.contents);
     if (b.key !== PropertiesService.getScriptProperties().getProperty('KEY')) throw new Error('auth');
-    out = b.action === 'add' ? add_(b) : data_(b);
+    out = b.action === 'add' ? add_(b) : b.action === 'detail' ? detail_(b) : data_(b);
   } catch (err) { out = { error: String(err.message || err) }; }
   return ContentService.createTextOutput(JSON.stringify(out)).setMimeType(ContentService.MimeType.JSON);
 }
@@ -36,6 +36,21 @@ function data_(b) {
     recent.push([d, String(r[2]), String(r[3]), sname, Number(r[6]) || 0]);
   });
   return { year, years: Object.keys(years).sort().reverse(), services: svcs.filter(s => s.active), names: col_(S.names), places: col_(S.places), agg: Object.values(agg), recent: recent.slice(-15).reverse() };
+}
+// Every entry of one year (date, name, place, service, points) - used only for the PDF report.
+function detail_(b) {
+  const byId = {}; services_().forEach(s => byId[s.id] = s);
+  const year = /^\d{4}$/.test(b.year) ? b.year : today_().slice(0, 4);
+  const log = sh_(S.log), n = log.getLastRow() - 1;
+  const rows = n > 0 ? log.getRange(2, 1, n, 8).getValues() : [];
+  const out = [];
+  rows.forEach(r => {
+    const d = r[1] instanceof Date ? Utilities.formatDate(r[1], 'Asia/Kolkata', 'yyyy-MM-dd') : String(r[1]);
+    if (d.slice(0, 4) !== year) return;
+    out.push([d, String(r[2]), String(r[3]), byId[r[4]] ? byId[r[4]].name : String(r[5]), Number(r[6]) || 0]);
+  });
+  out.sort((a, c) => (a[0] < c[0] ? -1 : a[0] > c[0] ? 1 : 0));
+  return { year, rows: out };
 }
 function add_(b) {
   const d = String(b.date || '');

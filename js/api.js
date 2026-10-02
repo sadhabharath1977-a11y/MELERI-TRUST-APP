@@ -32,6 +32,7 @@ export const api = {
   stats: () => request("GET", "/api/stats"),
   seva: {
     data: (year) => request("GET", "/api/service?year=" + encodeURIComponent(year || "")),
+    detail: (year) => request("GET", "/api/service?detail=1&year=" + encodeURIComponent(year || "")),
     add: (body) => request("POST", "/api/service", body)
   },
   admin: {
