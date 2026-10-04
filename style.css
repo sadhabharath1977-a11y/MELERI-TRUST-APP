@@ -78,6 +78,7 @@ button{font-family:inherit}
 .hero{padding:22px 18px 6px}
 .hero h1{font-size:26px;margin:0 0 6px;font-weight:800;letter-spacing:.2px;color:var(--green-900)}
 .hero p{margin:0;color:var(--muted);font-size:13.5px;line-height:1.6}
+.hero p.hero-big{font-size:17px;line-height:1.7;font-weight:600}
 
 .quote{
   margin:16px 18px;padding:16px 18px;border-radius:20px;
