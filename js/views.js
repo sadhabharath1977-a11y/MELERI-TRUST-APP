@@ -31,7 +31,7 @@ export function renderSite(site, role, entryAllowed) {
     entryAllowed
       ? (site.entry || []).map(linkRow).join("")
       : '<div class="row"><div class="ico">🔒</div><div><b>' + esc(t("அணுகல் இல்லை", "No access")) + "</b><small>" +
-        esc(t("வரவு செலவு Google Form-க்கு அனுமதி உள்ளவர்கள் மட்டுமே இதைப் பார்க்க முடியும்.", "Only people who have access to the Income-Expense Google Form can see this.")) + "</small></div></div>"
+        esc(t("Google Form, Google Sheet, Write, Edit பயிற்சி வேண்டும்", "Google Form, Google Sheet, Write, Edit training is required")) + "</small></div></div>"
   );
   put("#phoneList", site.phones.map((p) => row({ href: "tel:+" + digits(p.tel), icon: "📞", title: pick(p), sub: p.show })).join(""));
   put("#emailList", site.emails.map((m) => row({ href: "mailto:" + m.mail, icon: "📧", title: pick(m), sub: m.mail })).join(""));
