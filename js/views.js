@@ -13,16 +13,26 @@ function tile(i) {
 function row({ href, icon, title, sub, ext, dash }) {
   return '<a class="row" href="' + esc(safeUrl(href)) + '"' + (ext ? EXT : "") + (dash ? ' data-dash="1"' : "") + '><div class="ico">' + esc(icon) + "</div><div><b>" + esc(title) + "</b><small>" + esc(sub) + '</small></div><span class="go">›</span></a>';
 }
-const linkRow = (i) => row({ href: i.url, icon: i.icon, title: pick(i), sub: i.sub, ext: !i.dash, dash: i.dash });
+const linkRow = (i) =>
+  i.page
+    ? '<a class="row" href="#' + esc(i.page) + '" data-page="' + esc(i.page) + '"><div class="ico">' + esc(i.icon) + "</div><div><b>" + esc(pick(i)) + "</b><small>" + esc(i.sub) + '</small></div><span class="go">›</span></a>'
+    : row({ href: i.url, icon: i.icon, title: pick(i), sub: i.sub, ext: !i.dash, dash: i.dash });
 const put = (sel, html) => {
   const el = $(sel);
   if (el) el.innerHTML = html;
 };
 
 // role: "master" (ஆசிரியர்கள்/Masters) shows a master-specific lock notice; anything else (trustee/admin) shows the trustee one.
-export function renderSite(site, role) {
+export function renderSite(site, role, entryAllowed) {
   put("#quickGrid", site.quick.map(tile).join(""));
   put("#accountsList", site.accounts.map(linkRow).join(""));
+  put(
+    "#entryList",
+    entryAllowed
+      ? (site.entry || []).map(linkRow).join("")
+      : '<div class="row"><div class="ico">🔒</div><div><b>' + esc(t("அணுகல் இல்லை", "No access")) + "</b><small>" +
+        esc(t("வரவு செலவு Google Form-க்கு அனுமதி உள்ளவர்கள் மட்டுமே இதைப் பார்க்க முடியும்.", "Only people who have access to the Income-Expense Google Form can see this.")) + "</small></div></div>"
+  );
   put("#phoneList", site.phones.map((p) => row({ href: "tel:+" + digits(p.tel), icon: "📞", title: pick(p), sub: p.show })).join(""));
   put("#emailList", site.emails.map((m) => row({ href: "mailto:" + m.mail, icon: "📧", title: pick(m), sub: m.mail })).join(""));
   put("#linkList", site.links.map(linkRow).join(""));
@@ -142,6 +152,10 @@ export function renderAdminPanel(state) {
           const deviceBadge = m.deviceId
             ? '<span class="badge" title="' + esc(t("ஒரு Device-க்கு Lock ஆகியுள்ளது", "Locked to one device")) + '">📱</span>'
             : "";
+          const accBtn =
+            m.role === "master"
+              ? ""
+              : '<button class="admin-acc" type="button" data-email="' + esc(m.email) + '" data-on="' + (m.accounts ? "1" : "0") + '" title="' + esc(t("வரவு செலவு Google Form அணுகல்", "Income-Expense Form access")) + '">' + (m.accounts ? "₹✅" : "₹🚫") + "</button>";
           const resetBtn = m.deviceId
             ? '<button class="admin-reset" type="button" aria-label="Reset device" data-email="' + esc(m.email) + '" title="' + esc(t("Device Reset", "Reset device")) + '">🔓</button>'
             : "";
@@ -152,6 +166,7 @@ export function renderAdminPanel(state) {
             esc(roleLabel(m.role)) +
             "</small></div>" +
             deviceBadge +
+            accBtn +
             resetBtn +
             '<button class="admin-remove" type="button" aria-label="Remove" data-email="' +
             esc(m.email) +
@@ -167,6 +182,17 @@ export function renderAdminPanel(state) {
         const r = await api.admin.remove(email);
         if (r.ok) renderList(r.data.members);
         else setErr(failText(r, t("நீக்க முடியவில்லை", "Could not remove")));
+      };
+    });
+    list.querySelectorAll(".admin-acc").forEach((btn) => {
+      btn.onclick = async () => {
+        const email = btn.dataset.email;
+        const turnOn = btn.dataset.on !== "1";
+        if (!confirm(turnOn ? t(email + " -க்கு வரவு செலவு பதிவு அணுகல் கொடுக்கவா?", "Give " + email + " access to Income-Expense entry?") : t(email + " -ன் வரவு செலவு பதிவு அணுகலை நீக்கவா?", "Remove " + email + "'s access to Income-Expense entry?"))) return;
+        setErr("");
+        const r = await api.admin.setAccounts(email, turnOn);
+        if (r.ok) renderList(r.data.members);
+        else setErr(failText(r, t("முடியவில்லை", "Could not update")));
       };
     });
     list.querySelectorAll(".admin-reset").forEach((btn) => {

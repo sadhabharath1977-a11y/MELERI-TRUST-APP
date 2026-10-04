@@ -18,12 +18,16 @@ const { allow } = require("./_lib/rateLimit");
 const { TRUSTEES } = require("./_lib/trustees-data");
 const { SITE, MASTER_SITE } = require("./_lib/site-data");
 
+// The 4 options behind "Income - Expense Entry" (Form, Bills & Vouchers sheet, Bill folder, Dashboard) are sent
+// ONLY to the admin and to members the admin has marked as having Google Form access. Everybody else gets
+// entryAllowed: false -> "அணுகல் இல்லை". Everything else in the app is unchanged for everybody.
 function bootstrap(s) {
   const base = { authenticated: true, email: s.email, isAdmin: s.isAdmin, role: s.role };
   // Admin always gets the full (trustee) view plus the master view, to preview/switch client-side.
-  if (s.isAdmin) return { ...base, trustees: TRUSTEES, site: SITE, masterSite: MASTER_SITE };
-  if (s.role === "master") return { ...base, trustees: [], site: MASTER_SITE };
-  return { ...base, trustees: TRUSTEES, site: SITE };
+  if (s.isAdmin) return { ...base, entryAllowed: true, trustees: TRUSTEES, site: SITE, masterSite: MASTER_SITE };
+  if (s.role === "master") return { ...base, entryAllowed: false, trustees: [], site: MASTER_SITE };
+  const allowed = !!s.accounts;
+  return { ...base, entryAllowed: allowed, trustees: TRUSTEES, site: allowed ? SITE : { ...SITE, entry: [] } };
 }
 
 module.exports = async (req, res) => {
@@ -64,7 +68,7 @@ module.exports = async (req, res) => {
         return send(res, 403, { allowed: false, email }); // isAllowed said yes but member vanished between the two reads - very rare
       }
       setAuthCookies(res, email, deviceId, !existingDeviceId);
-      return send(res, 200, bootstrap({ email, isAdmin: false, role: bind.role }));
+      return send(res, 200, bootstrap({ email, isAdmin: false, role: bind.role, accounts: bind.accounts }));
     }
 
     if (req.method === "DELETE") {

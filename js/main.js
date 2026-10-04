@@ -53,11 +53,11 @@ function setPreviewRole(role) {
 }
 
 // ---------- navigation (Back button works; no full reloads) ----------
-const PAGES = ["home", "trustees", "accounts", "service", "seva", "contacts", "more"];
+const PAGES = ["home", "trustees", "accounts", "accounts-entry", "service", "seva", "contacts", "more"];
 const sevaAllowed = () => !!state; // every logged-in member: trustees, masters and admin
 function showPage(id, animate) {
   if (!PAGES.includes(id)) id = "home";
-  if (isMasterView() && (id === "trustees" || id === "accounts")) id = "home";
+  if (isMasterView() && (id === "trustees" || id === "accounts" || id === "accounts-entry")) id = "home";
   if (id === "seva" && !sevaAllowed()) id = "home";
   document.querySelectorAll(".page").forEach((p) => {
     const active = p.id === id;
@@ -72,7 +72,7 @@ function showPage(id, animate) {
     }
   });
   document.querySelectorAll(".nav").forEach((n) => {
-    const on = n.dataset.page === id;
+    const on = n.dataset.page === (id === "accounts-entry" ? "accounts" : id);
     n.classList.toggle("active", on);
     if (on) n.setAttribute("aria-current", "page");
     else n.removeAttribute("aria-current");
@@ -130,7 +130,7 @@ function renderAll() {
   if (!state) return;
   const role = effectiveRole();
   const site = role === "master" && state.masterSite ? state.masterSite : state.site;
-  renderSite(site, role);
+  renderSite(site, role, !!state.entryAllowed);
   renderTrustees(role === "master" ? [] : state.trustees);
   applySearch();
   applyRoleVisibility();

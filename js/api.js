@@ -39,6 +39,7 @@ export const api = {
     list: () => request("GET", "/api/admin-emails"),
     add: (email, role) => request("POST", "/api/admin-emails", { email, role }),
     remove: (email) => request("DELETE", "/api/admin-emails?email=" + encodeURIComponent(email)),
-    resetDevice: (email) => request("PATCH", "/api/admin-emails?email=" + encodeURIComponent(email), { action: "reset-device" })
+    resetDevice: (email) => request("PATCH", "/api/admin-emails?email=" + encodeURIComponent(email), { action: "reset-device" }),
+    setAccounts: (email, allowed) => request("PATCH", "/api/admin-emails?email=" + encodeURIComponent(email), { action: "set-accounts", allowed: !!allowed })
   }
 };
