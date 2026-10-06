@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="ta">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#126b45">
+<meta name="robots" content="noindex,nofollow">
+<meta name="google-client-id" content="323362878068-gpr8osss81v1t2qv85ffedmca7dld54u.apps.googleusercontent.com">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>MELERI MVKM TRUST</title>
+<link rel="manifest" href="/manifest.json">
+<link rel="icon" type="image/png" sizes="32x32" href="/icons/icon-32.png">
+<link rel="apple-touch-icon" href="/icons/icon-180.png">
+<meta name="fonts-css" content="https://fonts.googleapis.com/css2?family=Noto+Sans+Tamil:wght@400;700;800&amp;display=swap">
+<link rel="stylesheet" href="/style.css">
+<link rel="modulepreload" href="/js/main.js">
+<link rel="modulepreload" href="/js/util.js">
+<link rel="modulepreload" href="/js/i18n.js">
+<link rel="modulepreload" href="/js/api.js">
+<link rel="modulepreload" href="/js/auth.js">
+<link rel="modulepreload" href="/js/views.js">
+<link rel="modulepreload" href="/js/stats.js">
+<link rel="modulepreload" href="/js/seva.js">
+</head>
+<body>
+
+<div id="lock" class="lock">
+  <div class="lockbox">
+    <img src="/maharishi.jpg" width="92" height="92" alt="">
+    <h2>MELERI MVKM TRUSTEES</h2>
+    <p>Trustees Internal Use Only</p>
+    <div id="lockChecking" class="checking"><span class="spinner"></span><span data-en="Verifying…">சரிபார்க்கிறது…</span></div>
+    <div id="gsiBtn" class="gsiBtn hidden"></div>
+    <div class="login-trust"><span data-en="🔒 Secure Access">🔒 பாதுகாப்பான அணுகல்</span><span data-en="⚡ Fast App">⚡ வேகமான App</span><span data-en="📱 Mobile Ready">📱 Mobile Ready</span></div>
+    <div id="err" class="err" role="alert"></div>
+    <button id="retryBtn" class="unlock hidden" type="button" data-en="Try again">மீண்டும் முயற்சி</button>
+  </div>
+</div>
+
+<div class="app">
+<header class="top"><div class="topbar">
+  <div class="brand"><img src="/maharishi.jpg" width="48" height="48" alt=""><div><b>MELERI MVKM TRUST</b><small id="brandSub" data-en="Trustees Internal App">அறங்காவலர்கள் Internal App</small></div></div>
+  <div class="top-actions">
+    <div id="userChip" class="user-chip hidden"></div>
+    <button id="langToggle" class="top-icon lang-toggle" type="button" aria-label="Language">EN</button>
+    <button class="top-icon" type="button" data-page="more" aria-label="More">⚙</button>
+  </div>
+</div></header>
+
+<section id="home" class="page active">
+  <div class="hero"><h1 data-en="Welcome 🙏">வணக்கம் 🙏</h1><p id="homeHeroSub" data-en="All key facilities for trustees, in one place.">அறங்காவலர்களுக்கான ஒரே இடத்தில் அனைத்து முக்கிய வசதிகளும்.</p></div>
+  <div class="welcome-strip"><div><span class="welcome-dot"></span><b data-en="Secure Trustee Workspace">பாதுகாப்பான அறங்காவலர் Workspace</b><small data-en="Fast • Private • Mobile-first">வேகமான • தனிப்பட்ட • Mobile-first</small></div><span class="status-pill">● ONLINE</span></div>
+  <div class="quote" data-en="&ldquo;Think and act for your own good and for society&rsquo;s good &mdash; that is an eternal duty.&rdquo;">“உனக்கும் நல்லதாய், ஊருக்கும் நல்லதாய் நினைப்பதும் செய்வதும் நித்தியகடன்.”</div>
+  <div class="section">
+    <div class="section-title"><h2 data-en="⚡ Quick Access">⚡ விரைவு அணுகல்</h2><span>QUICK ACCESS</span></div>
+    <div class="grid" id="quickGrid"><div class="tile skeleton"></div><div class="tile skeleton"></div><div class="tile skeleton"></div><div class="tile skeleton"></div></div>
+  </div>
+  <div class="section">
+    <div class="section-title"><h2 data-en="🧭 Main Sections">🧭 முக்கிய பகுதிகள்</h2></div>
+    <div class="list">
+      <a class="row" href="#accounts" data-page="accounts" data-trustee-only><div class="ico">₹</div><div><b data-en="Income &amp; Expense Accounts">வரவு செலவு கணக்கு</b><small>Income / Expense Entry</small></div><span class="go">›</span></a>
+      <a class="row" href="#trustees" data-page="trustees" data-trustee-only><div class="ico">👥</div><div><b data-en="Trustees">அறங்காவலர்கள்</b><small>Contacts, Folder, WhatsApp, Call</small></div><span class="go">›</span></a>
+      <a class="row" href="#service" data-page="service"><div class="ico">✨</div><div><b data-en="Service Details">சேவை விவரம்</b><small>Trust Service Statistics</small></div><span class="go">›</span></a>
+      <a class="row hidden" href="#seva" data-page="seva" data-seva><div class="ico">🪔</div><div><b data-en="Masters' Service Record">ஆசிரியர்கள் சேவைப் பதிவு</b><small>Service Log &amp; Charts</small></div><span class="go">›</span></a>
+      <a class="row" href="#contacts" data-page="contacts"><div class="ico">📞</div><div><b data-en="Important Contacts &amp; Links">முக்கிய தொடர்புகள் &amp; இணைப்புகள்</b><small>Call, Email, Links</small></div><span class="go">›</span></a>
+    </div>
+  </div>
+</section>
+
+<section id="trustees" class="page">
+  <div class="hero"><h1 data-en="Trustees 👥">அறங்காவலர்கள் 👥</h1><p data-en="Folder, WhatsApp and Call access for each member.">ஒவ்வொருவரின் Folder, WhatsApp மற்றும் Call வசதி.</p></div>
+  <div class="search"><input id="memberSearch" type="search" autocomplete="off" aria-label="Search" placeholder="பெயரை தேடுங்கள்…" data-en-ph="Search by name…"></div>
+  <div class="section"><div class="profile-grid" id="memberGrid"><div class="row"><small>Loading…</small></div></div></div>
+</section>
+
+<section id="accounts" class="page">
+  <div class="hero"><h1 data-en="Accounts Center ₹">கணக்கு மையம் ₹</h1><p data-en="Quick access to income-expense entry and quarterly reports.">வரவு செலவு பதிவு மற்றும் காலாண்டு அறிக்கைகளுக்கான விரைவு அணுகல்.</p></div>
+  <div class="section"><div class="list" id="accountsList"></div></div>
+  <div class="quote" data-en="🔐 Account-related links are for trustees' internal use only.">🔐 கணக்கு தொடர்பான இணைப்புகள் அறங்காவலர்களின் உள் பயன்பாட்டிற்காக.</div>
+</section>
+
+<section id="accounts-entry" class="page">
+  <div class="hero"><h1 data-en="Income &amp; Expense Accounts ₹">வரவு செலவு கணக்கு ₹</h1><p class="hero-big" data-en="Record income-expense, email bills, save bill vouchers.">வரவு செலவு பதிவு செய்தல், இமெயில் பில் அனுப்புதல், பில் வவுச்சர் save செய்தல்.</p></div>
+  <div class="section"><div class="list" id="entryList"></div></div>
+</section>
+
+<section id="service" class="page">
+  <div class="hero"><h1 data-en="Service Details ✨">சேவை விவரம் ✨</h1><p data-en="Statistics of the trust's spiritual service activities.">அறக்கட்டளையின் ஆன்மீக சேவைப் பணிகளின் புள்ளிவிவரம்.</p></div>
+  <div class="section"><div class="list"><a class="row hidden" href="#seva" data-page="seva" data-seva><div class="ico">🪔</div><div><b data-en="Masters' Service Record">ஆசிரியர்கள் சேவைப் பதிவு</b><small>Service Log &amp; Charts</small></div><span class="go">›</span></a></div></div>
+  <div class="section">
+    <div class="section-title"><h2 data-en="📜 Service So Far">📜 இதுவரையிலான சேவை</h2><span>Cumulative</span></div>
+    <div class="stat-grid" id="svcTotal"><div class="stat-card skeleton"></div><div class="stat-card skeleton"></div><div class="stat-card skeleton"></div><div class="stat-card skeleton"></div></div>
+  </div>
+  <div class="section">
+    <div class="section-title"><h2 data-en="📅 Current Year Service">📅 நடப்பாண்டு சேவை</h2><span>Current Year</span></div>
+    <div class="stat-grid" id="svcYear"><div class="stat-card skeleton"></div><div class="stat-card skeleton"></div><div class="stat-card skeleton"></div><div class="stat-card skeleton"></div></div>
+  </div>
+  <div class="quote" id="svcNote" data-en="✨ Service continues by the Guru's grace. (Figures shown in Tamil, from the shared sheet.)">✨ குருவின் அருளால் தொடரும் சேவை.</div>
+</section>
+
+<section id="seva" class="page">
+  <div class="hero"><h1 data-en="Service Record 🪔">சேவைப் பதிவு 🪔</h1><p data-en="Offered as selfless service, not for money. Thank you, Masters." >பணத்திற்காக அல்ல, தொண்டாகச் செய்யும் சேவையின் பதிவு. நன்றி ஆசிரியர்களே 🙏</p></div>
+  <div id="svHero" class="sv-hero"></div>
+  <a class="sv-sheet-link" href="https://docs.google.com/spreadsheets/d/1UMmM9I0_C_nQRCW_dwNSxHFmtzBhm_5aB0G4Li4gx5w/edit?usp=drivesdk" target="_blank" rel="noopener noreferrer">
+    <span class="sv-sheet-ic" aria-hidden="true">📝</span>
+    <span class="sv-sheet-tx"><b data-en="Add Name &amp; Place">பெயர், இடம் சேர்க்கை</b><small data-en="Tap to open the sheet">தொட்டால் Sheet திறக்கும்</small></span>
+    <span class="sv-sheet-go" aria-hidden="true">↗</span>
+  </a>
+  <div class="section"><div class="section-title"><h2 data-en="✍️ New Entry">✍️ புதிய பதிவு</h2></div><div id="svForm" class="sv-form"></div></div>
+  <div class="section"><div class="section-title"><h2 data-en="📊 Summary">📊 சுருக்கம்</h2><span id="svYearWrap"></span></div><div id="svSummary"></div></div>
+  <p class="ver">பதிப்பு v34 · 06-10-2026</p>
+</section>
+
+<section id="contacts" class="page">
+  <div class="hero"><h1 data-en="Important Contacts &amp; Links 📞">முக்கிய தொடர்புகள் &amp; இணைப்புகள் 📞</h1><p data-en="Tap a number to call directly, an email to open your mail app, or a link to open that page.">எண்ணைத் தொட்டால் நேரடியாக அழைப்பு செல்லும்; மின்னஞ்சலைத் தொட்டால் உங்கள் மெயில் பயன்பாடு திறக்கும்; இணைப்பைத் தொட்டால் அந்தப் பக்கம் திறக்கும்.</p></div>
+  <div class="section"><div class="section-title"><h2 data-en="📞 Phone Numbers">📞 தொலைபேசி எண்கள்</h2><span>Tap to Call</span></div><div class="list" id="phoneList"></div></div>
+  <div class="section"><div class="section-title"><h2 data-en="📧 Emails">📧 மின்னஞ்சல்கள்</h2><span>Tap to Email</span></div><div class="list" id="emailList"></div></div>
+  <div class="section"><div class="section-title"><h2 data-en="🔗 Important Links">🔗 முக்கிய இணைப்புகள்</h2><span>Tap to Open</span></div><div class="list" id="linkList"></div></div>
+  <div class="quote" data-en="📌 Phone numbers dial directly, emails open your mail app, and links open in a new tab.">📌 எண்களைத் தொட்டால் நேரடியாக அழைப்பு செல்லும்; மின்னஞ்சலைத் தொட்டால் உங்கள் மெயில் பயன்பாடு திறக்கும்; இணைப்பைத் தொட்டால் புதிய tab-ல் திறக்கும்.</div>
+</section>
+
+<section id="more" class="page">
+  <div class="hero"><h1 data-en="More ☰">மேலும் ☰</h1><p data-en="Other important links of the trust.">அறக்கட்டளையின் பிற முக்கிய இணைப்புகள்.</p></div>
+  <div class="section"><div class="list" id="moreList"></div></div>
+  <div id="roleSwitch" class="section hidden"></div>
+  <div id="adminPanel" class="section hidden"></div>
+  <div class="quote">MELERI MVKM TRUST • Trustees App<br><small>App-style multi-page navigation • Mobile friendly • PWA ready</small></div>
+</section>
+
+<div class="app-version">MELERI MVKM TRUST • Secure Workspace</div>
+<nav class="bottom" aria-label="Main">
+  <button class="nav" type="button" data-page="home"><span>⌂</span><span data-en="Home">முகப்பு</span></button>
+  <button class="nav" type="button" data-page="trustees" data-trustee-only><span>👥</span><span data-en="Trustees">அறங்காவலர்கள்</span></button>
+  <button class="nav" type="button" data-page="accounts" data-trustee-only><span>₹</span><span data-en="Accounts">கணக்கு</span></button>
+  <button class="nav" type="button" data-page="contacts"><span>📞</span><span data-en="Contacts">தொடர்புகள்</span></button>
+  <button class="nav" type="button" data-page="more"><span>☰</span><span data-en="More">மேலும்</span></button>
+</nav>
+</div>
+
+<script type="module" src="/js/main.js"></script>
+</body>
+</html>
