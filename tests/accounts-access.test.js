@@ -20,7 +20,7 @@ test("trustee WITHOUT access: old Accounts page unchanged, but none of the 4 opt
   assert.equal(res.statusCode, 200);
   assert.equal(res.body.entryAllowed, false);
   assert.deepEqual(res.body.site.entry, []);
-  assert.equal(res.body.site.accounts.length, 3); // Income-Expense Entry, Zone Quarterly, Dashboard - as before
+  assert.equal(res.body.site.accounts.length, 4); // Income-Expense Entry, Zone Quarterly, Dashboard, Service/Name/Place sheet
   assert.equal(res.body.site.accounts[0].page, "accounts-entry");
   assert.ok(res.body.site.quick.some((i) => i.dash)); // home Dashboard tile unchanged
   const all = JSON.stringify(res.body);

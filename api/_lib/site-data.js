@@ -18,7 +18,8 @@ const SITE = {
   accounts: [
     { icon: "➕", ta: "வரவு செலவு பதிவு", en: "Income - Expense Entry", sub: "Income – Expense Entry Form", page: "accounts-entry" },
     { icon: "📑", ta: "ஜோன் காலாண்டு கணக்கு", en: "Zone Quarterly Accounts", sub: "Quarterly Report", url: "https://wcscpoornam.vethathiriskyyoga.com/" },
-    { icon: "📊", ta: "டாஷ்போர்டு", en: "Dashboard", sub: "Financial Dashboard", url: DASHBOARD_URL, dash: true }
+    { icon: "📊", ta: "டாஷ்போர்டு", en: "Dashboard", sub: "Financial Dashboard", url: DASHBOARD_URL, dash: true },
+    { icon: "📝", ta: "சேவை விவரம், பெயர், இடம் சேர்க்கை", en: "Service Details, Name & Place Entry", sub: "Google Sheet", url: "https://docs.google.com/spreadsheets/d/1UMmM9I0_C_nQRCW_dwNSxHFmtzBhm_5aB0G4Li4gx5w/edit?usp=drivesdk" }
   ],
 
   // Opens when "Income - Expense Entry" is tapped. Sent ONLY to members who have Google Form access (api/session.js).
