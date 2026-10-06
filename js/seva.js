@@ -1,7 +1,9 @@
 // Service record: entry form, per-person / everyone summary, bar + donut charts.
 // Charts are plain HTML/SVG (the page CSP allows no inline styles or external scripts); widths are set from JS.
 // Smoothness: the last good data is kept in sessionStorage and shown instantly, then refreshed quietly;
-// a failed load is retried once automatically; saving updates the screen at once without reloading.
+// a failed load is retried once automatically. SAVE IS INSTANT: the entry is put in a small local queue
+// (localStorage) and the totals update at once; the queue is sent to the Sheet in the background with the
+// same one-time save number (rid), so retries / closing the app / losing the network can never lose or double an entry.
 import { $, escapeHtml as esc, showToast } from "./util.js";
 import { t } from "./i18n.js";
 import { api } from "./api.js";
@@ -16,12 +18,29 @@ const CK = "seva:v2:";
 let data = null;
 let year = "";
 let sel = "";
-let busy = false;
 let loading = false;
 let failed = false;
 let inflight = null;
 let f = { date: "", name: "", place: "", ids: [] };
-let pend = null; // { sig, rid }: the one-time save number; kept while the same entry is being retried
+let lastSig = ""; // fingerprint of the last server data drawn; an unchanged refresh does not redraw (no flicker)
+let lastTap = 0;
+let flushing = false;
+let retryTimer = 0;
+const QK = "seva:q:v1";
+const readQ = () => {
+  try {
+    const q = JSON.parse(localStorage.getItem(QK));
+    return Array.isArray(q) ? q : [];
+  } catch (e) {
+    return [];
+  }
+};
+const writeQ = (q) => {
+  try {
+    if (q.length) localStorage.setItem(QK, JSON.stringify(q));
+    else localStorage.removeItem(QK);
+  } catch (e) {}
+};
 const newRid = () => (window.crypto && crypto.randomUUID ? crypto.randomUUID() : Date.now().toString(36) + Math.random().toString(36).slice(2, 12) + "xx");
 
 const readCache = (y) => {
@@ -43,6 +62,7 @@ export function clearSeva() {
   data = null;
   year = "";
   sel = "";
+  lastSig = "";
   failed = false;
   f = { date: "", name: "", place: "", ids: [] };
   try {
@@ -85,15 +105,22 @@ export function loadSeva(quiet) {
   loading = !data && !quiet;
   failed = false;
   if (loading) renderSeva();
+  const wasLoading = loading;
   inflight = fetchData(year).then((r) => {
     inflight = null;
     loading = false;
-    if (r.ok && !busy) {
+    let redraw = true;
+    if (r.ok && !(data && readQ().length)) {
+      const sig = JSON.stringify(r.data);
+      redraw = wasLoading || !data || sig !== lastSig;
+      lastSig = sig;
       data = r.data;
       year = data.year;
       writeCache(data);
-    } else if (!r.ok && !data) failed = true;
-    renderSeva();
+    } else if (r.ok) redraw = false; // entries still waiting to be sent: keep the local totals
+    else if (!data) failed = true;
+    else redraw = false;
+    if (redraw) renderSeva();
   });
   return inflight;
 }
@@ -108,8 +135,9 @@ function formHtml() {
     '<label>' + esc(t("இடம்", "Place")) + '<select id="svPlace">' + opts(data.places, f.place, t("— தேர்ந்தெடுக்கவும் —", "— Select —")) + "</select></label>" +
     '<label>' + esc(t("சேவை விவரம் (ஒன்றுக்கு மேல் தேர்ந்தெடுக்கலாம்)", "Services (select one or more)")) + '</label><div class="sv-checks">' +
     data.services.map((s) => '<label class="sv-check"><input type="checkbox" data-sid="' + esc(s.id) + '"' + (f.ids.includes(s.id) ? " checked" : "") + "><span>" + esc(s.name) + "</span><em>" + s.points + "</em></label>").join("") + "</div>" +
-    '<div class="sv-total">' + esc(t("இந்தப் பதிவின் புள்ளிகள்", "Points for this entry")) + ": " + pts + "</div>" +
-    '<button id="svSave" class="unlock" type="button"' + (busy ? " disabled" : "") + ">" + (busy ? "⏳ " + esc(t("சேமிக்கிறது…", "Saving…")) : "💾 " + esc(t("சேமி", "Save"))) + "</button>"
+    '<div class="sv-total" id="svPts">' + esc(t("இந்தப் பதிவின் புள்ளிகள்", "Points for this entry")) + ": " + pts + "</div>" +
+    '<button id="svSave" class="unlock" type="button">💾 ' + esc(t("சேமி", "Save")) + "</button>" +
+    (readQ().length ? '<div class="sv-pend">⏳ ' + readQ().length + " " + esc(t("பதிவு அனுப்பப்படுகிறது… (இணையம் இல்லையென்றாலும் பாதுகாப்பாக உள்ளது)", "entries syncing… (safe even without internet)")) + "</div>" : "")
   );
 }
 
@@ -289,53 +317,75 @@ export function renderSeva() {
   requestAnimationFrame(() => requestAnimationFrame(() => document.querySelectorAll("#svSummary .bf").forEach((el) => (el.style.width = el.dataset.w + "%"))));
 }
 
-async function save() {
-  if (busy) return;
-  if (!f.name || !f.place || !f.ids.length) return showToast(t("பெயர், இடம், சேவை மூன்றையும் தேர்ந்தெடுக்கவும்", "Please select name, place and service"));
-  const date = f.date || today();
-  const sig = [date, f.name, f.place, [...f.ids].sort().join(",")].join("|");
-  if (!pend || pend.sig !== sig) pend = { sig, rid: newRid() }; // same entry => same number => the server saves it only once
-  busy = true;
-  renderSeva();
-  const picked = data.services.filter((s) => f.ids.includes(s.id));
-  let r;
-  for (let i = 0; i < 3; i++) {
-    r = await api.seva.add({ date, name: f.name, place: f.place, ids: f.ids, rid: pend.rid });
-    if (r.ok || (r.status > 0 && r.status < 500)) break;
-    await wait(1500); // slow/unconfirmed: try again with the SAME number (safe, cannot double-save)
-  }
-  busy = false;
-  if (r.ok) {
-    pend = null;
-    // Show the new totals immediately (no waiting for a reload), then confirm with the Sheet quietly.
-    if (data.year === date.slice(0, 4)) {
-      picked.forEach((s) => {
-        let row = data.agg.find((a) => a[0] === f.name && a[1] === s.id);
-        if (!row) data.agg.push((row = [f.name, s.id, s.name, 0, 0]));
-        row[3] += 1;
-        row[4] += s.points;
-      });
-      writeCache(data);
+// Sends queued entries one by one. Same rid every time => the Sheet saves each entry exactly once.
+export async function flushSeva() {
+  if (flushing || !readQ().length) return;
+  flushing = true;
+  let retry = false;
+  let signedOut = false;
+  try {
+    for (let guard = 0; guard < 50; guard++) {
+      const item = readQ()[0];
+      if (!item) break;
+      const r = await api.seva.add(item);
+      if (r.ok) writeQ(readQ().filter((x) => x.rid !== item.rid));
+      else if (r.status === 401) {
+        signedOut = true; // entries stay in the queue and go out after the next login
+        break;
+      } else if (r.status === 0 || r.status === 429 || r.status >= 500) {
+        retry = true; // no network / Sheet slow: try again shortly with the same number
+        break;
+      } else {
+        writeQ(readQ().filter((x) => x.rid !== item.rid)); // refused for good (e.g. wrong date)
+        showToast((r.data && r.data.error) || t("சேமிக்க முடியவில்லை", "Could not save"));
+      }
     }
-    f.ids = [];
-    detail = null; // the PDF must include this new entry
-    const m = THANKS[Math.floor(Math.random() * THANKS.length)];
-    showToast(t(m[0], m[1]) + " (+" + r.data.points + ")");
-    renderSeva();
-    setTimeout(() => loadSeva(true), 2500);
-  } else {
-    renderSeva();
-    showToast(
-      r.status === 0 || r.status >= 500
-        ? t("சேமிப்பு உறுதியாகவில்லை. மீண்டும் 'சேமி' தொடவும்; இரட்டிப்பாகாது.", "Could not confirm the save. Tap Save again; it will not be saved twice.")
-        : r.data.error || t("சேமிக்க முடியவில்லை", "Could not save")
-    );
+  } finally {
+    flushing = false;
   }
+  clearTimeout(retryTimer);
+  if (retry) retryTimer = setTimeout(flushSeva, 8000);
+  else if (!signedOut && readQ().length) return flushSeva(); // something was added while we were sending
+  else if (!signedOut) {
+    detail = null;
+    setTimeout(() => loadSeva(true), 600); // confirm the totals with the Sheet quietly
+  }
+  renderSeva();
+}
+
+function save() {
+  const now = Date.now();
+  if (now - lastTap < 800) return; // double tap
+  if (!f.name || !f.place || !f.ids.length) return showToast(t("பெயர், இடம், சேவை மூன்றையும் தேர்ந்தெடுக்கவும்", "Please select name, place and service"));
+  lastTap = now;
+  const date = f.date || today();
+  const picked = data.services.filter((s) => f.ids.includes(s.id));
+  const pts = picked.reduce((a, s) => a + s.points, 0);
+  const q = readQ();
+  q.push({ date, name: f.name, place: f.place, ids: [...f.ids], rid: newRid() }); // saved on this phone first: nothing can be lost
+  writeQ(q);
+  // Show the new totals immediately.
+  if (data.year === date.slice(0, 4)) {
+    picked.forEach((s) => {
+      let row = data.agg.find((a) => a[0] === f.name && a[1] === s.id);
+      if (!row) data.agg.push((row = [f.name, s.id, s.name, 0, 0]));
+      row[3] += 1;
+      row[4] += s.points;
+    });
+    writeCache(data);
+  }
+  f.ids = [];
+  detail = null; // the PDF must include this new entry
+  const m = THANKS[Math.floor(Math.random() * THANKS.length)];
+  showToast(t(m[0], m[1]) + " (+" + pts + ")");
+  renderSeva();
+  flushSeva();
 }
 
 export function initSeva() {
   const page = $("#seva");
   if (!page) return;
+  window.addEventListener("online", () => flushSeva());
   page.addEventListener("input", (e) => {
     const el = e.target;
     if (el.id === "svDate") f.date = el.value;
@@ -343,7 +393,9 @@ export function initSeva() {
     else if (el.id === "svPlace") f.place = el.value;
     else if (el.dataset && el.dataset.sid) {
       f.ids = el.checked ? [...f.ids, el.dataset.sid] : f.ids.filter((x) => x !== el.dataset.sid);
-      renderSeva();
+      const pts = data.services.filter((s) => f.ids.includes(s.id)).reduce((a, s) => a + s.points, 0);
+      const out = $("#svPts");
+      if (out) out.textContent = t("இந்தப் பதிவின் புள்ளிகள்", "Points for this entry") + ": " + pts;
     }
   });
   page.addEventListener("change", (e) => {

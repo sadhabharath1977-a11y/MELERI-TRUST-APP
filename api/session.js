@@ -10,7 +10,7 @@
 // cookie). A login attempt from a second device is rejected with 409 until an admin resets it.
 const { ADMIN_EMAIL } = require("./_lib/config");
 const { verifyGoogleToken } = require("./_lib/googleAuth");
-const { isAllowed, authenticate } = require("./_lib/auth");
+const { authenticate } = require("./_lib/auth");
 const { checkAndBindDevice } = require("./_lib/store");
 const { readDeviceId, newDeviceId, setAuthCookies, clearSessionCookie } = require("./_lib/token");
 const { noStore, send, clientIp, csrfOk } = require("./_lib/http");
@@ -48,8 +48,6 @@ module.exports = async (req, res) => {
       if (!allow("login:" + clientIp(req), 20, 60 * 1000)) return send(res, 429, { error: "too many attempts" });
       const email = await verifyGoogleToken(req.body && req.body.idToken);
       if (!email) return send(res, 401, { allowed: false, error: "invalid or expired google token" });
-      if (!(await isAllowed(email, { fresh: true }))) return send(res, 403, { allowed: false, email });
-
       const isAdmin = email === ADMIN_EMAIL;
       if (isAdmin) {
         // Admin is exempt from the one-device lock; no device cookie needed for them.
@@ -65,7 +63,7 @@ module.exports = async (req, res) => {
           console.log(JSON.stringify({ audit: "device-locked-out", email }));
           return send(res, 409, { allowed: false, error: "device-locked", email });
         }
-        return send(res, 403, { allowed: false, email }); // isAllowed said yes but member vanished between the two reads - very rare
+        return send(res, 403, { allowed: false, email }); // not on the allow-list (checkAndBindDevice does the one fresh Blob read)
       }
       setAuthCookies(res, email, deviceId, !existingDeviceId);
       return send(res, 200, bootstrap({ email, isAdmin: false, role: bind.role, accounts: bind.accounts }));

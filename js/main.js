@@ -4,7 +4,7 @@ import { t, initLang, onLangChange, curLang } from "./i18n.js";
 import { api, setUnauthorizedHandler } from "./api.js";
 import { initAuth, showChecking, showLogin, showRetry, hideLock, preloadGsi } from "./auth.js";
 import { renderSite, renderTrustees, renderUserChip, renderAdminPanel, renderRoleSwitch, closeDropdown } from "./views.js";
-import { initSeva, loadSeva, renderSeva, clearSeva } from "./seva.js";
+import { initSeva, loadSeva, renderSeva, clearSeva, flushSeva } from "./seva.js";
 import { loadStats, renderStats, clearStats, dashboardOpen } from "./stats.js";
 
 let state = null; // what the server returned after login: { email, isAdmin, role, trustees, site, masterSite? }
@@ -151,6 +151,7 @@ function onAuthed(data) {
   showPage(location.hash.slice(1), false);
   // Warm the stats cache when the phone is idle, so the Service page and Dashboard switch are instant.
   try { localStorage.setItem("mlr_seen", "1"); } catch (e) {}
+  flushSeva(); // entries saved earlier but not yet confirmed by the Sheet go out now (safe: same save number)
   (window.requestIdleCallback || ((fn) => setTimeout(fn, 1500)))(() => {
     loadStats();
     if (sevaAllowed()) loadSeva(true); // warm the service-record page too
@@ -178,10 +179,13 @@ function sessionEnded() {
 }
 
 async function boot() {
-  showChecking();
   let seen = false;
   try { seen = !!localStorage.getItem("mlr_seen"); } catch (e) {}
-  if (!seen) preloadGsi(); // first visit on this phone: a login screen is coming, fetch Google's script in parallel
+  if (seen) hideLock(); // returning phone: show the app frame (skeleton) immediately; the lock comes back only if the session is gone
+  else {
+    showChecking();
+    preloadGsi(); // first visit on this phone: a login screen is coming, fetch Google's script in parallel
+  }
   const r = await api.session();
   if (r.ok && r.data.authenticated) return onAuthed(r.data);
   if (r.status === 401) return showLogin();
@@ -189,17 +193,37 @@ async function boot() {
   showRetry(r.status === 0 ? t("இணைய இணைப்பு இல்லை. இணைப்பை சரிபார்த்து மீண்டும் முயற்சிக்கவும்.", "No connection. Check your internet and try again.") : t("சேவையகப் பிரச்சனை. சிறிது நேரம் கழித்து முயற்சிக்கவும்.", "Server problem. Please try again shortly."), boot);
 }
 
-// ---------- service worker (no forced reload on the very first visit) ----------
+// ---------- service worker: never reloads the page by itself ----------
+function showUpdateBar() {
+  if ($("#updBar")) return;
+  const bar = document.createElement("div");
+  bar.id = "updBar";
+  bar.className = "upd";
+  const msg = document.createElement("span");
+  msg.textContent = t("புதிய பதிப்பு தயாராக உள்ளது", "A new version is ready");
+  const btn = document.createElement("button");
+  btn.type = "button";
+  btn.textContent = t("புதுப்பி", "Update");
+  btn.onclick = () => location.reload();
+  bar.append(msg, btn);
+  document.body.appendChild(bar);
+}
 function registerServiceWorker() {
   if (!("serviceWorker" in navigator)) return;
-  const hadController = !!navigator.serviceWorker.controller;
-  let reloading = false;
-  navigator.serviceWorker.addEventListener("controllerchange", () => {
-    if (!hadController || reloading) return;
-    reloading = true;
-    location.reload();
+  navigator.serviceWorker.addEventListener("message", (e) => {
+    if (e.data && e.data.type === "updated") showUpdateBar();
   });
   navigator.serviceWorker.register("/sw.js").catch(() => {});
+}
+
+// Web fonts are added after start-up so they can never delay the first screen (system font shows meanwhile).
+function loadFonts() {
+  const m = document.querySelector('meta[name="fonts-css"]');
+  if (!m || !m.content) return;
+  const l = document.createElement("link");
+  l.rel = "stylesheet";
+  l.href = m.content;
+  document.head.appendChild(l);
 }
 
 // ---------- start ----------
@@ -213,5 +237,9 @@ initDashboardLinks();
 const search = $("#memberSearch");
 if (search) search.addEventListener("input", applySearch);
 boot();
-if (document.readyState === "complete") registerServiceWorker();
-else window.addEventListener("load", registerServiceWorker);
+const afterLoad = () => {
+  registerServiceWorker();
+  loadFonts();
+};
+if (document.readyState === "complete") afterLoad();
+else window.addEventListener("load", afterLoad);

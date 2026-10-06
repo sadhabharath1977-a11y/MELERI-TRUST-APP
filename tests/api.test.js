@@ -36,7 +36,7 @@ const call = async (handler, method, opts) => {
   await handler(H.fakeReq(method, opts), res);
   return res;
 };
-const cookieOf = (res) => (res.headers["set-cookie"] || "").split(";")[0];
+const cookieOf = (res) => { const c = res.headers["set-cookie"]; return (Array.isArray(c) ? c : [c || ""]).map((x) => x.split(";")[0]).join("; "); }; // session + device cookie
 const login = async (email) => {
   const res = await call(sessionApi, "POST", { headers: H.CSRF, body: { idToken: H.mintIdToken({ email }) } });
   return { res, cookie: cookieOf(res) };
@@ -167,17 +167,19 @@ test("admin panel API: only admin; add / list / remove; audit; can't remove admi
   assert.equal((await call(adminApi, "GET", { headers: { cookie: member } })).statusCode, 403);
 
   const list = await call(adminApi, "GET", { headers: { cookie: adm } });
-  assert.deepEqual(list.body.emails, ["admin@example.com", "member@example.com"]);
+  const em = (r) => r.body.members.map((m) => m.email); // the API returns member objects { email, role, deviceId, accounts }
+  assert.equal(list.body.adminEmail, "admin@example.com");
+  assert.deepEqual(em(list), ["member@example.com"]);
 
   const h = Object.assign({ cookie: adm }, H.CSRF);
   assert.equal((await call(adminApi, "POST", { headers: { cookie: adm }, body: { email: "x@y.co" } })).statusCode, 403); // no CSRF header
   assert.equal((await call(adminApi, "POST", { headers: h, body: { email: "not-an-email" } })).statusCode, 400);
   const added = await call(adminApi, "POST", { headers: h, body: { email: "  New@Example.com " } });
-  assert.deepEqual(added.body.emails, ["admin@example.com", "member@example.com", "new@example.com"]);
-  assert.deepEqual(JSON.parse(blob.store.data), ["admin@example.com", "member@example.com", "new@example.com"]);
+  assert.deepEqual(em(added), ["member@example.com", "new@example.com"]);
+  assert.deepEqual(JSON.parse(blob.store.data).map((m) => m.email), ["member@example.com", "new@example.com"]);
 
   const removed = await call(adminApi, "DELETE", { headers: h, query: { email: "member@example.com" } });
-  assert.deepEqual(removed.body.emails, ["admin@example.com", "new@example.com"]);
+  assert.deepEqual(em(removed), ["new@example.com"]);
   assert.equal((await call(adminApi, "DELETE", { headers: h, query: { email: "admin@example.com" } })).statusCode, 400);
 });
 
@@ -202,6 +204,10 @@ test("store: normalises, falls back to ALLOWED_EMAILS when Blob is down, fails c
   store.__setBlobForTests({ get: async () => { throw new Error("blob down"); }, put: async () => {} });
   process.env.ALLOWED_EMAILS = "A@x.co\nb@x.co, a@x.co";
   assert.deepEqual(await store.readAllowedEmails({ fresh: true }), ["a@x.co", "b@x.co"]);
+  // an outage keeps serving the last good list, so members are not locked out by a short Blob problem
+  assert.deepEqual(await store.readAllowedEmails({ fresh: true }), ["a@x.co", "b@x.co"]);
+  // no last good list and no fallback => fails closed
+  store.__setBlobForTests({ get: async () => { throw new Error("blob down"); }, put: async () => {} });
   delete process.env.ALLOWED_EMAILS;
   assert.deepEqual(await store.readAllowedEmails({ fresh: true }), []);
 });
