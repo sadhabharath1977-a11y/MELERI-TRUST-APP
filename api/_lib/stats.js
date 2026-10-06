@@ -31,12 +31,12 @@ async function fetchStats() {
   // Preferred: the figures live in the "சேவை விவரம்" tab of the same Sheet as the service record
   // (read through the Apps Script that is already connected). If the script has not been updated yet
   // (no csv in its reply) or the tab is missing, fall back to the old published-CSV link.
-  // "src" / "why" in the result say which source was used and, if the old link was used, why.
+  // When the old link has to be used, the reason is written to the server log (Vercel > Logs).
   let why = "script not configured";
   if (SERVICE_SCRIPT_URL && SERVICE_SCRIPT_KEY) {
     try {
       const d = await callScript({ action: "stats" });
-      if (d && typeof d.csv === "string") return { ...parseStats(d.csv), src: "sheet" };
+      if (d && typeof d.csv === "string") return parseStats(d.csv);
       why = "script reply has no csv (Apps Script not redeployed as a New version?)";
     } catch (e) {
       if (!(e && e.status === 400)) throw e; // slow/unreachable: caller serves the last good copy
@@ -46,7 +46,8 @@ async function fetchStats() {
   const url = STATS_CSV_URL + (STATS_CSV_URL.includes("?") ? "&" : "?") + "_=" + Date.now();
   const r = await fetch(url, { cache: "no-store", signal: AbortSignal.timeout(6000) });
   if (!r.ok) throw new Error("sheet fetch failed: " + r.status);
-  return { ...parseStats(await r.text()), src: "csv", why };
+  if (SERVICE_SCRIPT_URL && SERVICE_SCRIPT_KEY) console.warn("stats: using STATS_CSV_URL fallback -", why);
+  return parseStats(await r.text());
 }
 
 async function getStats() {
