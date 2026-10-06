@@ -2,7 +2,8 @@
 // Service-statistics sheet -> compact JSON. Parsed on the server, cached for a couple of minutes
 // and shared by all users, so the browser no longer downloads and parses the Google Sheet itself.
 const { parseCSV } = require("./csv");
-const { STATS_CSV_URL } = require("./config");
+const { STATS_CSV_URL, SERVICE_SCRIPT_URL, SERVICE_SCRIPT_KEY } = require("./config");
+const { callScript } = require("./seva");
 
 const CACHE_MS = 30 * 1000;
 let cache = { at: 0, data: null };
@@ -27,10 +28,25 @@ function parseStats(text) {
 }
 
 async function fetchStats() {
+  // Preferred: the figures live in the "சேவை விவரம்" tab of the same Sheet as the service record
+  // (read through the Apps Script that is already connected). If the script has not been updated yet
+  // (no csv in its reply) or the tab is missing, fall back to the old published-CSV link.
+  // "src" / "why" in the result say which source was used and, if the old link was used, why.
+  let why = "script not configured";
+  if (SERVICE_SCRIPT_URL && SERVICE_SCRIPT_KEY) {
+    try {
+      const d = await callScript({ action: "stats" });
+      if (d && typeof d.csv === "string") return { ...parseStats(d.csv), src: "sheet" };
+      why = "script reply has no csv (Apps Script not redeployed as a New version?)";
+    } catch (e) {
+      if (!(e && e.status === 400)) throw e; // slow/unreachable: caller serves the last good copy
+      why = "script error: " + e.message;
+    }
+  }
   const url = STATS_CSV_URL + (STATS_CSV_URL.includes("?") ? "&" : "?") + "_=" + Date.now();
   const r = await fetch(url, { cache: "no-store", signal: AbortSignal.timeout(6000) });
   if (!r.ok) throw new Error("sheet fetch failed: " + r.status);
-  return parseStats(await r.text());
+  return { ...parseStats(await r.text()), src: "csv", why };
 }
 
 async function getStats() {
