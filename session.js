@@ -10,20 +10,24 @@
 // cookie). A login attempt from a second device is rejected with 409 until an admin resets it.
 const { ADMIN_EMAIL } = require("./_lib/config");
 const { verifyGoogleToken } = require("./_lib/googleAuth");
-const { isAllowed, authenticate } = require("./_lib/auth");
+const { authenticate } = require("./_lib/auth");
 const { checkAndBindDevice } = require("./_lib/store");
-const { readDeviceId, newDeviceId, setAuthCookies, clearSessionCookie } = require("./_lib/token");
+const { readDeviceId, newDeviceId, setAuthCookies, setSessionCookie, clearSessionCookie } = require("./_lib/token");
 const { noStore, send, clientIp, csrfOk } = require("./_lib/http");
 const { allow } = require("./_lib/rateLimit");
 const { TRUSTEES } = require("./_lib/trustees-data");
 const { SITE, MASTER_SITE } = require("./_lib/site-data");
 
+// The 4 options behind "Income - Expense Entry" (Form, Bills & Vouchers sheet, Bill folder, Dashboard) are sent
+// ONLY to the admin and to members the admin has marked as having Google Form access. Everybody else gets
+// entryAllowed: false -> "அணுகல் இல்லை". Everything else in the app is unchanged for everybody.
 function bootstrap(s) {
   const base = { authenticated: true, email: s.email, isAdmin: s.isAdmin, role: s.role };
   // Admin always gets the full (trustee) view plus the master view, to preview/switch client-side.
-  if (s.isAdmin) return { ...base, trustees: TRUSTEES, site: SITE, masterSite: MASTER_SITE };
-  if (s.role === "master") return { ...base, trustees: [], site: MASTER_SITE };
-  return { ...base, trustees: TRUSTEES, site: SITE };
+  if (s.isAdmin) return { ...base, entryAllowed: true, trustees: TRUSTEES, site: SITE, masterSite: MASTER_SITE };
+  if (s.role === "master") return { ...base, entryAllowed: false, trustees: [], site: MASTER_SITE };
+  const allowed = !!s.accounts;
+  return { ...base, entryAllowed: allowed, trustees: TRUSTEES, site: allowed ? SITE : { ...SITE, entry: [] } };
 }
 
 module.exports = async (req, res) => {
@@ -36,6 +40,7 @@ module.exports = async (req, res) => {
     if (req.method === "GET") {
       const s = await authenticate(req);
       if (!s) return send(res, 401, { authenticated: false });
+      setSessionCookie(res, s.email); // sliding login: every app open renews the cookie, so an active member is never asked to sign in again
       return send(res, 200, bootstrap(s));
     }
 
@@ -44,8 +49,6 @@ module.exports = async (req, res) => {
       if (!allow("login:" + clientIp(req), 20, 60 * 1000)) return send(res, 429, { error: "too many attempts" });
       const email = await verifyGoogleToken(req.body && req.body.idToken);
       if (!email) return send(res, 401, { allowed: false, error: "invalid or expired google token" });
-      if (!(await isAllowed(email, { fresh: true }))) return send(res, 403, { allowed: false, email });
-
       const isAdmin = email === ADMIN_EMAIL;
       if (isAdmin) {
         // Admin is exempt from the one-device lock; no device cookie needed for them.
@@ -61,10 +64,10 @@ module.exports = async (req, res) => {
           console.log(JSON.stringify({ audit: "device-locked-out", email }));
           return send(res, 409, { allowed: false, error: "device-locked", email });
         }
-        return send(res, 403, { allowed: false, email }); // isAllowed said yes but member vanished between the two reads - very rare
+        return send(res, 403, { allowed: false, email }); // not on the allow-list (checkAndBindDevice does the one fresh Blob read)
       }
       setAuthCookies(res, email, deviceId, !existingDeviceId);
-      return send(res, 200, bootstrap({ email, isAdmin: false, role: bind.role }));
+      return send(res, 200, bootstrap({ email, isAdmin: false, role: bind.role, accounts: bind.accounts }));
     }
 
     if (req.method === "DELETE") {

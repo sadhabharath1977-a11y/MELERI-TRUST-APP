@@ -5,7 +5,7 @@
 // reloads by itself in the middle of typing. No version to bump for normal uploads.
 // photos & icons = cache-first (their file names are content hashes); fonts = stale-while-revalidate;
 // /api/* is NEVER cached (login and member data must always come live from the server).
-const VERSION = "v36";
+const VERSION = "v37";
 const SHELL_CACHE = "meleri-shell-" + VERSION;
 const IMG_CACHE = "meleri-img-" + VERSION;
 const FONT_CACHE = "meleri-fonts-v1";

@@ -18,17 +18,25 @@ module.exports = async (req, res) => {
     if (req.method === "GET") {
       const q = String((req.query && req.query.year) || "");
       const year = /^\d{4}$/.test(q) ? q : "";
-      const c = cache[year];
-      if (c && Date.now() - c.at < 20000) return send(res, 200, c.data);
-      const data = await callScript({ action: "data", year });
-      cache[year] = { at: Date.now(), data };
-      return send(res, 200, data);
+      const detail = String((req.query && req.query.detail) || "") === "1"; // full entry list for the PDF report
+      const ck = year + (detail ? ":d" : "");
+      const fresh = String((req.query && req.query.fresh) || "") === "1"; // asked right after a save: skip the 30 s copy
+      const c = cache[ck];
+      if (!fresh && c && Date.now() - c.at < 30000) return send(res, 200, c.data);
+      try {
+        const data = await callScript({ action: detail ? "detail" : "data", year });
+        cache[ck] = { at: Date.now(), data };
+        return send(res, 200, data);
+      } catch (e) {
+        if (c && !fresh) return send(res, 200, c.data); // Sheet is slow right now: show the last good copy instead of an error
+        throw e;
+      }
     }
     if (req.method === "POST") {
       if (!csrfOk(req)) return send(res, 403, { error: "bad request origin" });
       if (!allow("seva:" + s.email, 30, 60 * 1000)) return send(res, 429, { error: "too many requests" });
       const b = req.body || {};
-      const out = await callScript({ action: "add", date: b.date, name: b.name, place: b.place, ids: Array.isArray(b.ids) ? b.ids.slice(0, 20) : [], by: s.email });
+      const out = await callScript({ action: "add", date: b.date, name: b.name, place: b.place, ids: Array.isArray(b.ids) ? b.ids.slice(0, 20) : [], rid: typeof b.rid === "string" ? b.rid.slice(0, 64) : "", by: s.email });
       cache = {};
       return send(res, 200, out);
     }
