@@ -26,6 +26,24 @@ let lastSig = ""; // fingerprint of the last server data drawn; an unchanged ref
 let lastTap = 0;
 let flushing = false;
 let retryTimer = 0;
+let formSig = "";
+let sumSig = "";
+let yearSig = "";
+const FK = "seva:fq:v1"; // entries the Sheet refused: kept here (never thrown away) until the member retries, edits or deletes them
+const readF = () => {
+  try {
+    const q = JSON.parse(localStorage.getItem(FK));
+    return Array.isArray(q) ? q : [];
+  } catch (e) {
+    return [];
+  }
+};
+const writeF = (q) => {
+  try {
+    if (q.length) localStorage.setItem(FK, JSON.stringify(q));
+    else localStorage.removeItem(FK);
+  } catch (e) {}
+};
 const QK = "seva:q:v1";
 const readQ = () => {
   try {
@@ -63,6 +81,9 @@ export function clearSeva() {
   year = "";
   sel = "";
   lastSig = "";
+  formSig = "";
+  sumSig = "";
+  yearSig = "";
   failed = false;
   f = { date: "", name: "", place: "", ids: [] };
   try {
@@ -72,18 +93,19 @@ export function clearSeva() {
 
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 
-async function fetchData(y) {
-  let r = await api.seva.data(y);
+async function fetchData(y, fresh) {
+  let r = await api.seva.data(y, fresh);
   if (!r.ok && r.status !== 401) {
     await wait(1200); // Apps Script may have been asleep: one automatic second try
-    r = await api.seva.data(y);
+    r = await api.seva.data(y, fresh);
   }
   return r;
 }
 
 // quiet = background refresh (no spinner, no error screen when we already have something to show)
-export function loadSeva(quiet) {
+export function loadSeva(quiet, fresh) {
   if (inflight) {
+    if (fresh) return inflight.then(() => loadSeva(quiet, true)); // an older (possibly stale) load is running: ask again afterwards, with the server copy skipped
     if (!data && !quiet) {
       loading = true;
       renderSeva();
@@ -106,7 +128,7 @@ export function loadSeva(quiet) {
   failed = false;
   if (loading) renderSeva();
   const wasLoading = loading;
-  inflight = fetchData(year).then((r) => {
+  inflight = fetchData(year, fresh).then((r) => {
     inflight = null;
     loading = false;
     let redraw = true;
@@ -137,7 +159,22 @@ function formHtml() {
     data.services.map((s) => '<label class="sv-check"><input type="checkbox" data-sid="' + esc(s.id) + '"' + (f.ids.includes(s.id) ? " checked" : "") + "><span>" + esc(s.name) + "</span><em>" + s.points + "</em></label>").join("") + "</div>" +
     '<div class="sv-total" id="svPts">' + esc(t("இந்தப் பதிவின் புள்ளிகள்", "Points for this entry")) + ": " + pts + "</div>" +
     '<button id="svSave" class="unlock" type="button">💾 ' + esc(t("சேமி", "Save")) + "</button>" +
+    failedHtml() +
     (readQ().length ? '<div class="sv-pend">⏳ ' + readQ().length + " " + esc(t("பதிவு அனுப்பப்படுகிறது… (இணையம் இல்லையென்றாலும் பாதுகாப்பாக உள்ளது)", "entries syncing… (safe even without internet)")) + "</div>" : "")
+  );
+}
+
+function failedHtml() {
+  const list = readF();
+  if (!list.length) return "";
+  return (
+    '<div class="sv-fail"><b>⚠️ ' + esc(t("அனுப்ப முடியாத பதிவுகள்", "Entries that could not be saved")) + "</b>" +
+    list.map((x) =>
+      '<div class="sv-fitem"><span>' + esc(dmy(x.date)) + " · " + esc(x.name) + " · " + esc(x.place) + "</span><small>" + esc(x.why || "") + "</small>" +
+      '<div class="sv-fbtn"><button type="button" data-fretry="' + esc(x.rid) + '">🔁 ' + esc(t("மீண்டும்", "Retry")) + "</button>" +
+      '<button type="button" data-fedit="' + esc(x.rid) + '">✏️ ' + esc(t("திருத்து", "Edit")) + "</button>" +
+      '<button type="button" data-fdel="' + esc(x.rid) + '">🗑 ' + esc(t("நீக்கு", "Delete")) + "</button></div></div>"
+    ).join("") + "</div>"
   );
 }
 
@@ -298,7 +335,11 @@ function summaryHtml() {
   );
 }
 
-export function renderSeva() {
+// force = true after the member's own action (save, picking a person/year, retry/edit): always redraw.
+// Background refreshes (force = false) redraw only the parts whose data really changed, and never a part the
+// member is touching right now (an open dropdown / focused field) - so nothing closes or jumps while choosing.
+const busy = (el) => !!(el && document.activeElement && el.contains(document.activeElement));
+export function renderSeva(force) {
   if (!$("#svForm")) return;
   if (!data) {
     $("#svHero").innerHTML = "";
@@ -307,14 +348,33 @@ export function renderSeva() {
       ? '<div class="checking"><span class="spinner"></span><span>' + esc(t("ஏற்றுகிறது…", "Loading…")) + "</span></div>"
       : failed ? '<small>' + esc(t("தரவு load ஆகவில்லை", "Data failed to load")) + '</small><button id="svRetry" class="unlock" type="button">🔄 ' + esc(t("மீண்டும் முயற்சி", "Try again")) + "</button>" : "";
     $("#svSummary").innerHTML = "";
+    formSig = "";
+    sumSig = "";
+    yearSig = "";
     return;
   }
   const all = data.agg;
   $("#svHero").innerHTML = "<b>" + all.reduce((a, r) => a + r[3], 0) + " 🌿</b><small>" + esc(t("இந்த ஆண்டு (" + data.year + ") நம் குழு செய்த மொத்த சேவைகள்", "Services our team offered in " + data.year)) + " · " + all.reduce((a, r) => a + r[4], 0) + " " + esc(t("புள்ளிகள்", "points")) + "</small>";
-  $("#svForm").innerHTML = formHtml();
-  $("#svYearWrap").innerHTML = '<select id="svYear" class="sv-sel">' + (data.years.includes(data.year) ? data.years : [data.year, ...data.years]).map((y) => '<option value="' + y + '"' + (y === data.year ? " selected" : "") + ">" + y + "</option>").join("") + "</select>";
-  $("#svSummary").innerHTML = summaryHtml();
-  requestAnimationFrame(() => requestAnimationFrame(() => document.querySelectorAll("#svSummary .bf").forEach((el) => (el.style.width = el.dataset.w + "%"))));
+
+  const lang = t("ta", "en");
+  const fSig = JSON.stringify([lang, data.names, data.places, data.services, readQ().length, readF().length]);
+  if (force || !formSig || (fSig !== formSig && !busy($("#svForm")))) {
+    $("#svForm").innerHTML = formHtml();
+    formSig = fSig;
+  }
+
+  const ySig = JSON.stringify([data.year, data.years]);
+  if (ySig !== yearSig) {
+    $("#svYearWrap").innerHTML = '<select id="svYear" class="sv-sel">' + (data.years.includes(data.year) ? data.years : [data.year, ...data.years]).map((y) => '<option value="' + y + '"' + (y === data.year ? " selected" : "") + ">" + y + "</option>").join("") + "</select>";
+    yearSig = ySig;
+  }
+
+  const sSig = JSON.stringify([lang, sel, data.year, data.agg, data.names]);
+  if (force || !sumSig || (sSig !== sumSig && !busy($("#svSummary")))) {
+    $("#svSummary").innerHTML = summaryHtml();
+    sumSig = sSig;
+    requestAnimationFrame(() => requestAnimationFrame(() => document.querySelectorAll("#svSummary .bf").forEach((el) => (el.style.width = el.dataset.w + "%"))));
+  }
 }
 
 // Sends queued entries one by one. Same rid every time => the Sheet saves each entry exactly once.
@@ -336,8 +396,11 @@ export async function flushSeva() {
         retry = true; // no network / Sheet slow: try again shortly with the same number
         break;
       } else {
-        writeQ(readQ().filter((x) => x.rid !== item.rid)); // refused for good (e.g. wrong date)
-        showToast((r.data && r.data.error) || t("சேமிக்க முடியவில்லை", "Could not save"));
+        // refused for good (e.g. wrong date): move it to the "could not be saved" box instead of deleting it
+        const why = (r.data && r.data.error) || t("சேமிக்க முடியவில்லை", "Could not save");
+        writeF([...readF(), { ...item, why }]);
+        writeQ(readQ().filter((x) => x.rid !== item.rid));
+        showToast(why + " — " + t("பதிவு பாதுகாக்கப்பட்டுள்ளது (கீழே திருத்தலாம்)", "entry kept safe (fix it below)"));
       }
     }
   } finally {
@@ -348,7 +411,7 @@ export async function flushSeva() {
   else if (!signedOut && readQ().length) return flushSeva(); // something was added while we were sending
   else if (!signedOut) {
     detail = null;
-    setTimeout(() => loadSeva(true), 600); // confirm the totals with the Sheet quietly
+    setTimeout(() => loadSeva(true, true), 600); // confirm the totals with the Sheet quietly (fresh: skips the 30 s server copy)
   }
   renderSeva();
 }
@@ -378,8 +441,27 @@ function save() {
   detail = null; // the PDF must include this new entry
   const m = THANKS[Math.floor(Math.random() * THANKS.length)];
   showToast(t(m[0], m[1]) + " (+" + pts + ")");
-  renderSeva();
+  renderSeva(true);
   flushSeva();
+}
+
+// buttons of the "could not be saved" box: retry as it is / load back into the form to fix / delete
+function failedAction(btn) {
+  const rid = btn.dataset.fretry || btn.dataset.fedit || btn.dataset.fdel;
+  const list = readF();
+  const item = list.find((x) => x.rid === rid);
+  if (!item) return;
+  writeF(list.filter((x) => x.rid !== rid));
+  if (btn.dataset.fretry) {
+    writeQ([...readQ(), { date: item.date, name: item.name, place: item.place, ids: item.ids, rid: item.rid }]);
+    renderSeva(true);
+    flushSeva();
+  } else if (btn.dataset.fedit) {
+    f = { date: item.date, name: item.name, place: item.place, ids: [...item.ids] };
+    renderSeva(true);
+    const form = $("#svForm");
+    if (form && form.scrollIntoView) form.scrollIntoView({ block: "start" });
+  } else renderSeva(true);
 }
 
 export function initSeva() {
@@ -401,18 +483,20 @@ export function initSeva() {
   page.addEventListener("change", (e) => {
     if (e.target.id === "svSel") {
       sel = e.target.value;
-      renderSeva();
+      renderSeva(true);
     } else if (e.target.id === "svYear") {
       year = e.target.value;
       const c = readCache(year);
       if (c) {
         data = c;
-        renderSeva();
+        renderSeva(true);
       }
       loadSeva(true);
     }
   });
   page.addEventListener("click", (e) => {
+    const fb = e.target.closest("[data-fretry],[data-fedit],[data-fdel]");
+    if (fb) return failedAction(fb);
     if (e.target.closest("#svSave")) save();
     else if (e.target.closest("#svRetry")) loadSeva();
     else if (e.target.closest("#svPdfAll")) printReport("");

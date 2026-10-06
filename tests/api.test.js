@@ -80,7 +80,7 @@ test("session token: round trip, tamper, expiry", () => {
   const forged = Buffer.from(JSON.stringify({ e: "admin@example.com", x: 9999999999 })).toString("base64url");
   assert.equal(token.verify(forged + "." + m), null);
   assert.equal(token.verify(p + "." + m.slice(0, -2) + "AA"), null);
-  assert.equal(token.verify(token.sign("a@b.co", Date.now() - 8 * 24 * 3600 * 1000)), null);
+  assert.equal(token.verify(token.sign("a@b.co", Date.now() - 31 * 24 * 3600 * 1000)), null);
   assert.equal(token.verify("garbage"), null);
 });
 

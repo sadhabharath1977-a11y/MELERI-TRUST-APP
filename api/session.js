@@ -12,7 +12,7 @@ const { ADMIN_EMAIL } = require("./_lib/config");
 const { verifyGoogleToken } = require("./_lib/googleAuth");
 const { authenticate } = require("./_lib/auth");
 const { checkAndBindDevice } = require("./_lib/store");
-const { readDeviceId, newDeviceId, setAuthCookies, clearSessionCookie } = require("./_lib/token");
+const { readDeviceId, newDeviceId, setAuthCookies, setSessionCookie, clearSessionCookie } = require("./_lib/token");
 const { noStore, send, clientIp, csrfOk } = require("./_lib/http");
 const { allow } = require("./_lib/rateLimit");
 const { TRUSTEES } = require("./_lib/trustees-data");
@@ -40,6 +40,7 @@ module.exports = async (req, res) => {
     if (req.method === "GET") {
       const s = await authenticate(req);
       if (!s) return send(res, 401, { authenticated: false });
+      setSessionCookie(res, s.email); // sliding login: every app open renews the cookie, so an active member is never asked to sign in again
       return send(res, 200, bootstrap(s));
     }
 

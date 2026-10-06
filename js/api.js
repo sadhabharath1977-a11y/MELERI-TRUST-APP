@@ -31,7 +31,7 @@ export const api = {
   logout: () => request("DELETE", "/api/session"),
   stats: () => request("GET", "/api/stats"),
   seva: {
-    data: (year) => request("GET", "/api/service?year=" + encodeURIComponent(year || "")),
+    data: (year, fresh) => request("GET", "/api/service?year=" + encodeURIComponent(year || "") + (fresh ? "&fresh=1" : "")),
     detail: (year) => request("GET", "/api/service?detail=1&year=" + encodeURIComponent(year || "")),
     add: (body) => request("POST", "/api/service", body)
   },

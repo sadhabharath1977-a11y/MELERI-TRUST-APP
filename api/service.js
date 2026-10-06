@@ -20,14 +20,15 @@ module.exports = async (req, res) => {
       const year = /^\d{4}$/.test(q) ? q : "";
       const detail = String((req.query && req.query.detail) || "") === "1"; // full entry list for the PDF report
       const ck = year + (detail ? ":d" : "");
+      const fresh = String((req.query && req.query.fresh) || "") === "1"; // asked right after a save: skip the 30 s copy
       const c = cache[ck];
-      if (c && Date.now() - c.at < 30000) return send(res, 200, c.data);
+      if (!fresh && c && Date.now() - c.at < 30000) return send(res, 200, c.data);
       try {
         const data = await callScript({ action: detail ? "detail" : "data", year });
         cache[ck] = { at: Date.now(), data };
         return send(res, 200, data);
       } catch (e) {
-        if (c) return send(res, 200, c.data); // Sheet is slow right now: show the last good copy instead of an error
+        if (c && !fresh) return send(res, 200, c.data); // Sheet is slow right now: show the last good copy instead of an error
         throw e;
       }
     }

@@ -424,3 +424,9 @@ select:active{transform:scale(.99)}
 .upd{position:fixed;left:50%;transform:translateX(-50%);bottom:96px;z-index:210;display:flex;align-items:center;gap:12px;max-width:92%;padding:10px 14px;border-radius:16px;background:#0d5c3a;color:#fff;font-size:13px;font-weight:700;box-shadow:0 10px 26px rgba(0,0,0,.3)}
 .upd button{border:0;border-radius:12px;padding:8px 14px;background:#fff;color:#0d5c3a;font-weight:800;font-family:inherit}
 .sv-pend{text-align:center;font-size:12px;font-weight:700;color:var(--green-800);background:var(--green-50);border-radius:12px;padding:8px 10px}
+
+.sv-fail{display:flex;flex-direction:column;gap:8px;background:#fff4f2;border:1px solid #f1c9c3;border-radius:14px;padding:10px 12px;color:#8a2a20;font-size:13px}
+.sv-fitem{display:flex;flex-direction:column;gap:4px;padding:8px 0;border-top:1px solid #f1c9c3}
+.sv-fitem small{color:#a04a40}
+.sv-fbtn{display:flex;gap:8px;flex-wrap:wrap}
+.sv-fbtn button{font:inherit;font-size:13px;font-weight:700;padding:8px 12px;border:1px solid #e3b3ab;border-radius:10px;background:#fff;color:#8a2a20}

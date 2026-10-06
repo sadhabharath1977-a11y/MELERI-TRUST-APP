@@ -16,6 +16,25 @@ function cached_(key, ttl, fn) {
 }
 const col_ = (n) => cached_('col:' + n, 300, () => sh_(n).getRange(2, 1, Math.max(sh_(n).getLastRow() - 1, 1), 1).getValues().map(r => String(r[0]).trim()).filter(String));
 const today_ = () => Utilities.formatDate(new Date(), 'Asia/Kolkata', 'yyyy-MM-dd');
+const tomorrow_ = () => Utilities.formatDate(new Date(Date.now() + 864e5), 'Asia/Kolkata', 'yyyy-MM-dd');
+// KEEP-WARM: a time trigger (every 5 min) runs warm(), which refreshes the cached lists and the current-year summary,
+// so Seva / Service pages open from a ready cache instead of reading the whole Sheet. Run setupWarmTrigger() ONCE by hand.
+function warm() {
+  // Same lock as add_(): a save and a warm-up can never overlap, so warm() can never put an older copy back after a save.
+  const lock = LockService.getScriptLock();
+  if (!lock.tryLock(5000)) return; // a save is in progress: skip this round, the next one runs in 5 minutes
+  try {
+    const c = CacheService.getScriptCache();
+    c.removeAll(['svc', 'col:' + S.names, 'col:' + S.places]);
+    const y = today_().slice(0, 4);
+    const s = JSON.stringify(data_({ year: y }));
+    try { const o = {}; o['data:' + y] = s; o['data:'] = s; c.putAll(o, 360); } catch (e) {}
+  } finally { lock.releaseLock(); }
+}
+function setupWarmTrigger() {
+  ScriptApp.getProjectTriggers().filter(t => t.getHandlerFunction() === 'warm').forEach(t => ScriptApp.deleteTrigger(t));
+  ScriptApp.newTrigger('warm').timeBased().everyMinutes(5).create();
+}
 function services_() {
   return cached_('svc', 300, () => {
     const sh = sh_(S.svc);
@@ -78,7 +97,7 @@ function detail_(b) {
 }
 function add_(b) {
   const d = String(b.date || '');
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(d) || d > today_()) throw new Error('தேதி சரியில்லை');
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(d) || d > tomorrow_()) throw new Error('தேதி சரியில்லை'); // +1 day: a phone set to a time zone ahead of India must not lose the entry
   if (col_(S.names).indexOf(b.name) < 0) throw new Error('பெயர் சரியில்லை');
   if (col_(S.places).indexOf(b.place) < 0) throw new Error('இடம் சரியில்லை');
   const byId = {}; services_().forEach(s => { if (s.active) byId[s.id] = s; });
