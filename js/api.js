@@ -9,6 +9,7 @@ async function request(method, path, body) {
     options.headers["Content-Type"] = "application/json";
     options.body = JSON.stringify(body);
   }
+  if (typeof AbortSignal !== "undefined" && AbortSignal.timeout) options.signal = AbortSignal.timeout(15000);
   let response;
   try {
     response = await fetch(path, options);
@@ -30,13 +31,15 @@ export const api = {
   logout: () => request("DELETE", "/api/session"),
   stats: () => request("GET", "/api/stats"),
   seva: {
-    data: (year) => request("GET", "/api/service?year=" + encodeURIComponent(year || "")),
+    data: (year, fresh) => request("GET", "/api/service?year=" + encodeURIComponent(year || "") + (fresh ? "&fresh=1" : "")),
+    detail: (year) => request("GET", "/api/service?detail=1&year=" + encodeURIComponent(year || "")),
     add: (body) => request("POST", "/api/service", body)
   },
   admin: {
     list: () => request("GET", "/api/admin-emails"),
     add: (email, role) => request("POST", "/api/admin-emails", { email, role }),
     remove: (email) => request("DELETE", "/api/admin-emails?email=" + encodeURIComponent(email)),
-    resetDevice: (email) => request("PATCH", "/api/admin-emails?email=" + encodeURIComponent(email), { action: "reset-device" })
+    resetDevice: (email) => request("PATCH", "/api/admin-emails?email=" + encodeURIComponent(email), { action: "reset-device" }),
+    setAccounts: (email, allowed) => request("PATCH", "/api/admin-emails?email=" + encodeURIComponent(email), { action: "set-accounts", allowed: !!allowed })
   }
 };

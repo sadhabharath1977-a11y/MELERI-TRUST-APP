@@ -22,7 +22,7 @@ async function authenticate(req) {
   const member = await getMember(email);
   if (!member) return null; // removed from the allow-list
   if (member.deviceId && member.deviceId !== readDeviceId(req)) return null; // a different device holds the lock
-  return { email, isAdmin: false, role: member.role };
+  return { email, isAdmin: false, role: member.role, accounts: !!member.accounts };
 }
 
 module.exports = { isAllowed, authenticate };

@@ -27,6 +27,6 @@ const STATS_CSV_URL = String(
 const SERVICE_SCRIPT_URL = String(process.env.SERVICE_SCRIPT_URL || "").trim();
 const SERVICE_SCRIPT_KEY = String(process.env.SERVICE_SCRIPT_KEY || "").trim();
 
-const SESSION_TTL_SECONDS = 7 * 24 * 60 * 60; // 7 days (access is re-checked on every request)
+const SESSION_TTL_SECONDS = 30 * 24 * 60 * 60; // 30 days, renewed every time the app is opened (access is re-checked on every request)
 
 module.exports = { GOOGLE_CLIENT_ID, ADMIN_EMAIL, STATS_CSV_URL, SESSION_TTL_SECONDS, SERVICE_SCRIPT_URL, SERVICE_SCRIPT_KEY };

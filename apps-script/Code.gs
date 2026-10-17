@@ -2,22 +2,66 @@
 // Project Settings > Script properties > KEY = (நீண்ட random எழுத்துகள்; Vercel-ல் SERVICE_SCRIPT_KEY-உம் இதுவே)
 // Deploy > Web app: Execute as = Me, Who has access = Anyone.
 const S = { svc: 'சேவைகள்', names: 'பெயர்கள்', places: 'இடங்கள்', log: 'பதிவுகள்' };
+const STATS_TABS = ['சேவை விவரம்', 'Sevai Details', 'sheet6', 'Sheet6'];
 const sh_ = (n) => SpreadsheetApp.getActive().getSheetByName(n);
-const col_ = (n) => sh_(n).getRange(2, 1, Math.max(sh_(n).getLastRow() - 1, 1), 1).getValues().map(r => String(r[0]).trim()).filter(String);
+// Small CacheService layer: the lists (names / places / services) are cached 5 min, the yearly summary 2 min.
+// A new entry clears the summary at once. (If you edit names/places in the Sheet they show up within 5 minutes.)
+function cached_(key, ttl, fn) {
+  const c = CacheService.getScriptCache();
+  const hit = c.get(key);
+  if (hit) { try { return JSON.parse(hit); } catch (e) {} }
+  const v = fn();
+  try { c.put(key, JSON.stringify(v), ttl); } catch (e) {}
+  return v;
+}
+const col_ = (n) => cached_('col:' + n, 300, () => sh_(n).getRange(2, 1, Math.max(sh_(n).getLastRow() - 1, 1), 1).getValues().map(r => String(r[0]).trim()).filter(String));
 const today_ = () => Utilities.formatDate(new Date(), 'Asia/Kolkata', 'yyyy-MM-dd');
+const tomorrow_ = () => Utilities.formatDate(new Date(Date.now() + 864e5), 'Asia/Kolkata', 'yyyy-MM-dd');
+// KEEP-WARM: a time trigger (every 5 min) runs warm(), which refreshes the cached lists and the current-year summary,
+// so Seva / Service pages open from a ready cache instead of reading the whole Sheet. Run setupWarmTrigger() ONCE by hand.
+function warm() {
+  // Same lock as add_(): a save and a warm-up can never overlap, so warm() can never put an older copy back after a save.
+  const lock = LockService.getScriptLock();
+  if (!lock.tryLock(5000)) return; // a save is in progress: skip this round, the next one runs in 5 minutes
+  try {
+    const c = CacheService.getScriptCache();
+    c.removeAll(['svc', 'trustees', 'col:' + S.names, 'col:' + S.places]);
+    try { trustees_(); } catch (e) {}
+    const y = today_().slice(0, 4);
+    const s = JSON.stringify(data_({ year: y }));
+    try { const o = {}; o['data:' + y] = s; o['data:'] = s; c.putAll(o, 360); } catch (e) {}
+  } finally { lock.releaseLock(); }
+}
+function setupWarmTrigger() {
+  ScriptApp.getProjectTriggers().filter(t => t.getHandlerFunction() === 'warm').forEach(t => ScriptApp.deleteTrigger(t));
+  ScriptApp.newTrigger('warm').timeBased().everyMinutes(5).create();
+}
 function services_() {
-  const sh = sh_(S.svc);
-  return sh.getRange(2, 1, Math.max(sh.getLastRow() - 1, 1), 4).getValues()
-    .filter(r => r[0]).map(r => ({ id: String(r[0]).trim(), name: String(r[1]).trim(), points: Number(r[2]) || 0, active: String(r[3]).trim() === 'ஆம்' }));
+  return cached_('svc', 300, () => {
+    const sh = sh_(S.svc);
+    return sh.getRange(2, 1, Math.max(sh.getLastRow() - 1, 1), 4).getValues()
+      .filter(r => r[0]).map(r => ({ id: String(r[0]).trim(), name: String(r[1]).trim(), points: Number(r[2]) || 0, active: String(r[3]).trim() === 'ஆம்' }));
+  });
 }
 function doPost(e) {
   let out;
   try {
     const b = JSON.parse(e.postData.contents);
     if (b.key !== PropertiesService.getScriptProperties().getProperty('KEY')) throw new Error('auth');
-    out = b.action === 'add' ? add_(b) : data_(b);
+    out = b.action === 'add' ? add_(b) : b.action === 'trustees' ? { trustees: trustees_() } : b.action === 'photo' ? photo_(b) : b.action === 'stats' ? stats_() : b.action === 'detail' ? cached_('detail:' + String(b.year), 120, () => detail_(b)) : cached_('data:' + String(b.year), 120, () => data_(b));
   } catch (err) { out = { error: String(err.message || err) }; }
   return ContentService.createTextOutput(JSON.stringify(out)).setMimeType(ContentService.MimeType.JSON);
+}
+// "சேவை விவரம்" tab -> CSV text (the app reads the dashboard figures from here).
+function stats_() {
+  let sh = null;
+  for (const n of STATS_TABS) { sh = sh_(n); if (sh) break; }
+  if (!sh) throw new Error('சேவை விவரம் tab இல்லை');
+  const rows = sh.getLastRow(), cols = sh.getLastColumn();
+  if (rows < 1 || cols < 1) return { csv: '' };
+  const q = (v) => { v = String(v); return /[",\n\r]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v; };
+  const csv = sh.getRange(1, 1, rows, cols).getDisplayValues().map(r => r.map(q).join(',')).join('\n');
+  return { csv };
 }
 function data_(b) {
   const svcs = services_(), byId = {}; svcs.forEach(s => byId[s.id] = s);
@@ -37,20 +81,101 @@ function data_(b) {
   });
   return { year, years: Object.keys(years).sort().reverse(), services: svcs.filter(s => s.active), names: col_(S.names), places: col_(S.places), agg: Object.values(agg), recent: recent.slice(-15).reverse() };
 }
+// Every entry of one year (date, name, place, service, points) - used only for the PDF report.
+function detail_(b) {
+  const byId = {}; services_().forEach(s => byId[s.id] = s);
+  const year = /^\d{4}$/.test(b.year) ? b.year : today_().slice(0, 4);
+  const log = sh_(S.log), n = log.getLastRow() - 1;
+  const rows = n > 0 ? log.getRange(2, 1, n, 8).getValues() : [];
+  const out = [];
+  rows.forEach(r => {
+    const d = r[1] instanceof Date ? Utilities.formatDate(r[1], 'Asia/Kolkata', 'yyyy-MM-dd') : String(r[1]);
+    if (d.slice(0, 4) !== year) return;
+    out.push([d, String(r[2]), String(r[3]), byId[r[4]] ? byId[r[4]].name : String(r[5]), Number(r[6]) || 0]);
+  });
+  out.sort((a, c) => (a[0] < c[0] ? -1 : a[0] > c[0] ? 1 : 0));
+  return { year, rows: out };
+}
 function add_(b) {
   const d = String(b.date || '');
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(d) || d > today_()) throw new Error('தேதி சரியில்லை');
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(d) || d > tomorrow_()) throw new Error('தேதி சரியில்லை'); // +1 day: a phone set to a time zone ahead of India must not lose the entry
   if (col_(S.names).indexOf(b.name) < 0) throw new Error('பெயர் சரியில்லை');
   if (col_(S.places).indexOf(b.place) < 0) throw new Error('இடம் சரியில்லை');
   const byId = {}; services_().forEach(s => { if (s.active) byId[s.id] = s; });
   const ids = (b.ids || []).filter((x, i, a) => byId[x] && a.indexOf(x) === i);
   if (!ids.length) throw new Error('சேவையைத் தேர்ந்தெடுக்கவும்');
+  // rid = one-time save number made by the app. The same rid arriving twice (a retry after a slow reply) is NOT saved again.
+  const rid = /^[A-Za-z0-9-]{8,64}$/.test(String(b.rid || '')) ? String(b.rid) : '';
   const lock = LockService.getScriptLock(); lock.waitLock(10000);
   try {
-    const log = sh_(S.log), r = log.getLastRow() + 1, now = new Date();
-    const vals = ids.map(id => [now, d, b.name, b.place, id, byId[id].name, byId[id].points, String(b.by || '')]);
+    const log = sh_(S.log), n = log.getLastRow() - 1;
+    if (rid && n > 0) {
+      const m = Math.min(n, 300), from = n - m + 2; // only the latest rows: a retry always arrives within seconds
+      const rids = log.getRange(from, 9, m, 1).getValues(), pts = log.getRange(from, 7, m, 1).getValues();
+      let cnt = 0, sum = 0;
+      rids.forEach((x, i) => { if (String(x[0]) === rid) { cnt++; sum += Number(pts[i][0]) || 0; } });
+      if (cnt) return { ok: true, duplicate: true, count: cnt, points: sum };
+    }
+    const r = log.getLastRow() + 1, now = new Date();
+    const vals = ids.map(id => [now, d, b.name, b.place, id, byId[id].name, byId[id].points, String(b.by || ''), rid]);
     log.getRange(r, 2, vals.length, 1).setNumberFormat('@');
-    log.getRange(r, 1, vals.length, 8).setValues(vals);
+    log.getRange(r, 1, vals.length, 9).setValues(vals);
+    const c = CacheService.getScriptCache();
+    c.removeAll(['data:' + d.slice(0, 4), 'data:undefined', 'data:', 'detail:' + d.slice(0, 4), 'detail:undefined', 'detail:']);
   } finally { lock.releaseLock(); }
   return { ok: true, count: ids.length, points: ids.reduce((a, id) => a + byId[id].points, 0) };
+}
+
+// ====================== அறங்காவலர்கள் (Trustees) tab ======================
+// Tab "அறங்காவலர்கள்" columns:  A பெயர் | B பதவி | C WhatsApp எண் | D போட்டோ (Drive link) | E Folder link | F காட்டு (ஆம்/இல்லை)
+// Row order = order shown in the app. F = "இல்லை" hides that person (e.g. left the trust). Empty F = shown.
+// Changes show in the app within about 5 minutes.
+const TR_TAB = 'அறங்காவலர்கள்';
+function driveId_(v) {
+  v = String(v || '').trim();
+  if (!v) return '';
+  const m = v.match(/\/d\/([A-Za-z0-9_-]{10,})/) || v.match(/[?&]id=([A-Za-z0-9_-]{10,})/);
+  if (m) return m[1];
+  return /^[A-Za-z0-9_-]{20,}$/.test(v) ? v : '';
+}
+function trusteeRows_() {
+  const sh = sh_(TR_TAB);
+  if (!sh) throw new Error('அறங்காவலர்கள் tab இல்லை');
+  const n = sh.getLastRow() - 1;
+  if (n < 1) return [];
+  const out = [];
+  sh.getRange(2, 1, n, 6).getValues().forEach((r, i) => {
+    const name = String(r[0]).trim();
+    if (!name || String(r[5]).trim() === 'இல்லை') return;
+    let ph = String(r[2]).replace(/\D/g, '');
+    if (ph.length === 11 && ph.charAt(0) === '0') ph = ph.slice(1);
+    if (ph.length === 10) ph = '91' + ph;
+    out.push({ n: i + 2, name: name, role: String(r[1]).trim(), phone: ph, folder: String(r[4]).trim(), pid: driveId_(r[3]) });
+  });
+  return out;
+}
+function trustees_() {
+  return cached_('trustees', 300, () => trusteeRows_().map(t => ({ n: t.n, name: t.name, role: t.role, phone: t.phone, folder: t.folder, photo: t.pid ? t.pid.slice(-10) : '' })));
+}
+// One trustee's photo (small thumbnail) as base64. Only a file linked in the tab can be read, so nobody can ask for any other Drive file.
+function photo_(b) {
+  const n = Number(b.n);
+  if (!(n >= 2 && n <= 300)) throw new Error('n');
+  const row = trusteeRows_().filter(t => t.n === n)[0];
+  if (!row || !row.pid) throw new Error('போட்டோ இல்லை');
+  const c = CacheService.getScriptCache(), key = 'tph:' + row.pid;
+  const hit = c.get(key);
+  if (hit) { try { return JSON.parse(hit); } catch (e) {} }
+  const f = DriveApp.getFileById(row.pid);
+  let blob = f.getThumbnail();
+  if (!blob) { blob = f.getBlob(); if (blob.getBytes().length > 600000) throw new Error('போட்டோ மிகப் பெரியது'); }
+  const out = { mime: blob.getContentType(), b64: Utilities.base64Encode(blob.getBytes()) };
+  try { c.put(key, JSON.stringify(out), 21600); } catch (e) {}
+  return out;
+}
+// Run this ONCE by hand (Run button) so Google asks permission to read the photos from Drive.
+function authorizeDrive() { DriveApp.getRootFolder(); return 'OK'; }
+// Test: Run this by hand, then look at "Execution log" - it should list all trustees from the "அறங்காவலர்கள்" tab.
+function testTrustees() {
+  Logger.log(JSON.stringify(trustees_()));
 }

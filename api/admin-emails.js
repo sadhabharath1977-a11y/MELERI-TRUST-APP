@@ -2,7 +2,7 @@
 // Admin only: list / add / remove members (each with a role), and reset a member's device lock.
 const { ADMIN_EMAIL } = require("./_lib/config");
 const { authenticate } = require("./_lib/auth");
-const { readMembers, writeMembers, resetDevice } = require("./_lib/store");
+const { readMembers, writeMembers, resetDevice, setAccounts } = require("./_lib/store");
 const { noStore, send, csrfOk } = require("./_lib/http");
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -43,16 +43,24 @@ module.exports = async (req, res) => {
       const existing = current.find((m) => m.email === target);
       if (!existing && current.length >= MAX_EMAILS) return send(res, 400, { error: "list is full" });
       // Editing an existing member's role keeps their device lock as-is; only "Reset Device" clears it.
-      const next = [...current.filter((m) => m.email !== target), { email: target, role, deviceId: (existing && existing.deviceId) || null }];
+      const next = [...current.filter((m) => m.email !== target), { email: target, role, deviceId: (existing && existing.deviceId) || null, accounts: !!(existing && existing.accounts) }];
       await writeMembers(next);
       console.log(JSON.stringify({ audit: "member-added", by: s.email, target, role }));
       return send(res, 200, { members: next });
     }
 
     if (req.method === "PATCH") {
-      // Only action supported today: release a member's device lock.
+      // Actions: "reset-device" (release a member's device lock) and "set-accounts" (Income-Expense entry access on/off).
       const target = emailFrom(req);
       const action = (req.body && req.body.action) || (req.query && req.query.action);
+      if (action === "set-accounts") {
+        if (target === ADMIN_EMAIL) return send(res, 400, { error: "admin always has access" });
+        const allowed = !!(req.body && req.body.allowed === true);
+        const members = await setAccounts(target, allowed);
+        if (!members) return send(res, 404, { error: "not found" });
+        console.log(JSON.stringify({ audit: "accounts-access", by: s.email, target, allowed }));
+        return send(res, 200, { members });
+      }
       if (action !== "reset-device") return send(res, 400, { error: "unknown action" });
       if (target === ADMIN_EMAIL) return send(res, 400, { error: "admin has no device lock" });
       const members = await resetDevice(target);

@@ -12,9 +12,7 @@
 <link rel="manifest" href="/manifest.json">
 <link rel="icon" type="image/png" sizes="32x32" href="/icons/icon-32.png">
 <link rel="apple-touch-icon" href="/icons/icon-180.png">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+Tamil:wght@400;600;700;800&amp;family=Poppins:wght@600;700&amp;display=swap">
+<meta name="fonts-css" content="https://fonts.googleapis.com/css2?family=Noto+Sans+Tamil:wght@400;700;800&amp;display=swap">
 <link rel="stylesheet" href="/style.css">
 <link rel="modulepreload" href="/js/main.js">
 <link rel="modulepreload" href="/js/util.js">
@@ -56,7 +54,7 @@
   <div class="quote" data-en="&ldquo;Think and act for your own good and for society&rsquo;s good &mdash; that is an eternal duty.&rdquo;">“உனக்கும் நல்லதாய், ஊருக்கும் நல்லதாய் நினைப்பதும் செய்வதும் நித்தியகடன்.”</div>
   <div class="section">
     <div class="section-title"><h2 data-en="⚡ Quick Access">⚡ விரைவு அணுகல்</h2><span>QUICK ACCESS</span></div>
-    <div class="grid" id="quickGrid"></div>
+    <div class="grid" id="quickGrid"><div class="tile skeleton"></div><div class="tile skeleton"></div><div class="tile skeleton"></div><div class="tile skeleton"></div></div>
   </div>
   <div class="section">
     <div class="section-title"><h2 data-en="🧭 Main Sections">🧭 முக்கிய பகுதிகள்</h2></div>
@@ -82,9 +80,13 @@
   <div class="quote" data-en="🔐 Account-related links are for trustees' internal use only.">🔐 கணக்கு தொடர்பான இணைப்புகள் அறங்காவலர்களின் உள் பயன்பாட்டிற்காக.</div>
 </section>
 
+<section id="accounts-entry" class="page">
+  <div class="hero"><h1 data-en="Income &amp; Expense Accounts ₹">வரவு செலவு கணக்கு ₹</h1><p class="hero-big" data-en="Record income-expense, email bills, save bill vouchers.">வரவு செலவு பதிவு செய்தல், இமெயில் பில் அனுப்புதல், பில் வவுச்சர் save செய்தல்.</p></div>
+  <div class="section"><div class="list" id="entryList"></div></div>
+</section>
+
 <section id="service" class="page">
   <div class="hero"><h1 data-en="Service Details ✨">சேவை விவரம் ✨</h1><p data-en="Statistics of the trust's spiritual service activities.">அறக்கட்டளையின் ஆன்மீக சேவைப் பணிகளின் புள்ளிவிவரம்.</p></div>
-  <div class="section"><div class="list"><a class="row hidden" href="#seva" data-page="seva" data-seva><div class="ico">🪔</div><div><b data-en="Masters' Service Record">ஆசிரியர்கள் சேவைப் பதிவு</b><small>Service Log &amp; Charts</small></div><span class="go">›</span></a></div></div>
   <div class="section">
     <div class="section-title"><h2 data-en="📜 Service So Far">📜 இதுவரையிலான சேவை</h2><span>Cumulative</span></div>
     <div class="stat-grid" id="svcTotal"><div class="stat-card skeleton"></div><div class="stat-card skeleton"></div><div class="stat-card skeleton"></div><div class="stat-card skeleton"></div></div>
@@ -101,6 +103,7 @@
   <div id="svHero" class="sv-hero"></div>
   <div class="section"><div class="section-title"><h2 data-en="✍️ New Entry">✍️ புதிய பதிவு</h2></div><div id="svForm" class="sv-form"></div></div>
   <div class="section"><div class="section-title"><h2 data-en="📊 Summary">📊 சுருக்கம்</h2><span id="svYearWrap"></span></div><div id="svSummary"></div></div>
+  <p class="ver">பதிப்பு v38 · 17-10-2026</p>
 </section>
 
 <section id="contacts" class="page">
