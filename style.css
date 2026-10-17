@@ -423,3 +423,14 @@ select:active{transform:scale(.99)}
 .sv-fitem small{color:#a04a40}
 .sv-fbtn{display:flex;gap:8px;flex-wrap:wrap}
 .sv-fbtn button{font:inherit;font-size:13px;font-weight:700;padding:8px 12px;border:1px solid #e3b3ab;border-radius:10px;background:#fff;color:#8a2a20}
+
+/* ===== Pay & Send Details ===== */
+.pay-list{display:flex;flex-direction:column;gap:12px}
+.pay-card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:14px;box-shadow:var(--shadow-sm);display:flex;flex-direction:column;gap:7px}
+.pay-card b{font-size:15px;color:var(--green-900);font-weight:700}
+.pay-id{font-size:12.5px;color:var(--muted);word-break:break-all}
+.pay-btns{display:flex;gap:8px;flex-wrap:wrap;margin-top:4px}
+.pay-btn{flex:1;min-width:120px;text-align:center;font:inherit;font-weight:700;font-size:13px;padding:11px 10px;border-radius:14px;border:1px solid var(--green-600);background:var(--green-50);color:var(--green-800);text-decoration:none;cursor:pointer}
+.pay-btn.upi{background:var(--green-700);border-color:var(--green-700);color:#fff}
+.pay-btn.copy{flex:0 0 auto;min-width:0}
+.pay-btn:active{transform:scale(.97)}

@@ -25,8 +25,9 @@ function warm() {
   if (!lock.tryLock(5000)) return; // a save is in progress: skip this round, the next one runs in 5 minutes
   try {
     const c = CacheService.getScriptCache();
-    c.removeAll(['svc', 'trustees', 'col:' + S.names, 'col:' + S.places]);
+    c.removeAll(['svc', 'trustees', 'pay', 'col:' + S.names, 'col:' + S.places]);
     try { trustees_(); } catch (e) {}
+    try { pay_(); } catch (e) {}
     const y = today_().slice(0, 4);
     const s = JSON.stringify(data_({ year: y }));
     try { const o = {}; o['data:' + y] = s; o['data:'] = s; c.putAll(o, 360); } catch (e) {}
@@ -48,7 +49,7 @@ function doPost(e) {
   try {
     const b = JSON.parse(e.postData.contents);
     if (b.key !== PropertiesService.getScriptProperties().getProperty('KEY')) throw new Error('auth');
-    out = b.action === 'add' ? add_(b) : b.action === 'trustees' ? { trustees: trustees_() } : b.action === 'photo' ? photo_(b) : b.action === 'stats' ? stats_() : b.action === 'detail' ? cached_('detail:' + String(b.year), 120, () => detail_(b)) : cached_('data:' + String(b.year), 120, () => data_(b));
+    out = b.action === 'add' ? add_(b) : b.action === 'trustees' ? { trustees: trustees_() } : b.action === 'pay' ? { items: pay_() } : b.action === 'photo' ? photo_(b) : b.action === 'stats' ? stats_() : b.action === 'detail' ? cached_('detail:' + String(b.year), 120, () => detail_(b)) : cached_('data:' + String(b.year), 120, () => data_(b));
   } catch (err) { out = { error: String(err.message || err) }; }
   return ContentService.createTextOutput(JSON.stringify(out)).setMimeType(ContentService.MimeType.JSON);
 }
@@ -178,4 +179,29 @@ function authorizeDrive() { DriveApp.getRootFolder(); return 'OK'; }
 // Test: Run this by hand, then look at "Execution log" - it should list all trustees from the "அறங்காவலர்கள்" tab.
 function testTrustees() {
   Logger.log(JSON.stringify(trustees_()));
+}
+
+// ====================== செலுத்துதல் (Pay & Send Details) tab ======================
+// Tab "செலுத்துதல்" columns:  A தலைப்பு | B இமெயில் ID | C UPI ID | D காட்டு (ஆம்/இல்லை)
+// Row order = order shown in the app. D = "இல்லை" hides that row. Empty D = shown.
+// Changes show in the app within about 5 minutes.
+const PAY_TAB = 'செலுத்துதல்';
+function pay_() {
+  return cached_('pay', 300, () => {
+    const sh = sh_(PAY_TAB);
+    if (!sh) throw new Error('செலுத்துதல் tab இல்லை');
+    const n = sh.getLastRow() - 1;
+    if (n < 1) return [];
+    const out = [];
+    sh.getRange(2, 1, n, 4).getValues().forEach(r => {
+      const title = String(r[0]).trim();
+      if (!title || String(r[3]).trim() === 'இல்லை') return;
+      out.push({ title: title, email: String(r[1]).trim(), upi: String(r[2]).trim() });
+    });
+    return out;
+  });
+}
+// Test: Run this by hand, then look at "Execution log" - it should list the rows of the "செலுத்துதல்" tab.
+function testPay() {
+  Logger.log(JSON.stringify(pay_()));
 }

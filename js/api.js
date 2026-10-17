@@ -30,6 +30,7 @@ export const api = {
   login: (idToken) => request("POST", "/api/session", { idToken }),
   logout: () => request("DELETE", "/api/session"),
   stats: () => request("GET", "/api/stats"),
+  pay: () => request("GET", "/api/pay"),
   seva: {
     data: (year, fresh) => request("GET", "/api/service?year=" + encodeURIComponent(year || "") + (fresh ? "&fresh=1" : "")),
     detail: (year) => request("GET", "/api/service?detail=1&year=" + encodeURIComponent(year || "")),

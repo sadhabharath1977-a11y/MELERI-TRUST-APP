@@ -6,6 +6,7 @@ import { initAuth, showChecking, showLogin, showRetry, hideLock, preloadGsi } fr
 import { renderSite, renderTrustees, renderUserChip, renderAdminPanel, renderRoleSwitch, closeDropdown } from "./views.js";
 import { initSeva, loadSeva, renderSeva, clearSeva, flushSeva } from "./seva.js";
 import { loadStats, renderStats, clearStats, dashboardOpen } from "./stats.js";
+import { initPay, loadPay, renderPay, clearPay } from "./pay.js";
 
 let state = null; // what the server returned after login: { email, isAdmin, role, trustees, site, masterSite? }
 let previewRole = null; // admin only: lets the admin preview "trustee" or "master"; null = own role (trustee view)
@@ -33,6 +34,7 @@ function applyRoleVisibility() {
   const master = isMasterView();
   document.querySelectorAll("[data-trustee-only]").forEach((el) => el.classList.toggle("hidden", master));
   document.querySelectorAll("[data-seva]").forEach((el) => el.classList.toggle("hidden", !sevaAllowed()));
+  document.querySelectorAll("[data-master-only]").forEach((el) => el.classList.toggle("hidden", !master)); // trustees open Pay & Send Details from the Accounts page
   const nav = $(".bottom");
   if (nav) nav.classList.toggle("nav-3", master);
   setBilingual(
@@ -53,7 +55,7 @@ function setPreviewRole(role) {
 }
 
 // ---------- navigation (Back button works; no full reloads) ----------
-const PAGES = ["home", "trustees", "accounts", "accounts-entry", "service", "seva", "contacts", "more"];
+const PAGES = ["home", "trustees", "accounts", "accounts-entry", "pay", "service", "seva", "contacts", "more"];
 const sevaAllowed = () => !!state; // every logged-in member: trustees, masters and admin
 function showPage(id, animate) {
   if (!PAGES.includes(id)) id = "home";
@@ -72,13 +74,14 @@ function showPage(id, animate) {
     }
   });
   document.querySelectorAll(".nav").forEach((n) => {
-    const on = n.dataset.page === (id === "accounts-entry" ? "accounts" : id);
+    const on = n.dataset.page === (id === "accounts-entry" || id === "pay" ? "accounts" : id);
     n.classList.toggle("active", on);
     if (on) n.setAttribute("aria-current", "page");
     else n.removeAttribute("aria-current");
   });
   if (id === "service" && state) loadStats();
   if (id === "seva" && state) loadSeva();
+  if (id === "pay" && state) loadPay();
 }
 function go(id) {
   if (location.hash !== "#" + id) history.pushState(null, "", "#" + id);
@@ -141,6 +144,7 @@ function renderAll() {
   }
   renderStats();
   renderSeva();
+  renderPay();
 }
 
 function onAuthed(data) {
@@ -155,6 +159,7 @@ function onAuthed(data) {
   (window.requestIdleCallback || ((fn) => setTimeout(fn, 1500)))(() => {
     loadStats();
     if (sevaAllowed()) loadSeva(true); // warm the service-record page too
+    loadPay(true); // and the Pay & Send Details list
   });
 }
 
@@ -162,6 +167,7 @@ async function logout() {
   await api.logout();
   clearStats();
   clearSeva();
+  clearPay();
   try {
     if (window.google && window.google.accounts) window.google.accounts.id.disableAutoSelect();
   } catch (e) {}
@@ -174,6 +180,7 @@ function sessionEnded() {
   previewRole = null;
   clearStats();
   clearSeva();
+  clearPay();
   closeDropdown();
   showLogin(t("உள்நுழைவு காலாவதியாகிவிட்டது. மீண்டும் உள்நுழையவும்.", "Your session has ended. Please sign in again."));
 }
@@ -233,6 +240,7 @@ initLang();
 onLangChange(renderAll);
 initNav();
 initSeva();
+initPay();
 initDashboardLinks();
 const search = $("#memberSearch");
 if (search) search.addEventListener("input", applySearch);

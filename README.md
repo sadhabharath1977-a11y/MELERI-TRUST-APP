@@ -6,6 +6,7 @@ Static PWA (`index.html`, `style.css`, `js/`) + Vercel serverless API (`api/`). 
 api/session.js        login / session / bootstrap data (GET, POST, DELETE)
 api/admin-emails.js   admin only: allowed e-mail list
 api/stats.js          service statistics (server-cached Google Sheet)
+api/pay.js            pay & send details (rows of the Sheet tab "செலுத்துதல்")
 api/_lib/             config, token (cookie), googleAuth (local JWT verify), store (Blob),
                       csv, stats, rateLimit, http, auth, site-data, trustees-data   (server only, never public)
 js/                   main, auth, views, stats, api, i18n, util   (ES modules)
