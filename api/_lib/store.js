@@ -30,8 +30,7 @@ function normalizeMembers(value) {
     out.push({
       email,
       role: isObj && raw.role === "master" ? "master" : "trustee",
-      deviceId: (isObj && typeof raw.deviceId === "string" && raw.deviceId) || null,
-      accounts: !!(isObj && raw.accounts === true) // may open the Income-Expense entry options (Google Form access) - set by the admin
+      deviceId: (isObj && typeof raw.deviceId === "string" && raw.deviceId) || null
     });
   }
   return out;
@@ -103,19 +102,10 @@ async function checkAndBindDevice(email, deviceId) {
     m.deviceId = deviceId;
     await writeMembers(current);
   }
-  return { ok: true, other: false, role: m.role, accounts: !!m.accounts };
+  return { ok: true, other: false, role: m.role };
 }
 
 // Admin action: releases the device lock so the member can log in again from any device.
-// Admin action: gives / takes away a member's access to the Income-Expense entry options.
-async function setAccounts(email, allowed) {
-  const current = await readMembers({ fresh: true });
-  const m = current.find((x) => x.email === email);
-  if (!m) return null;
-  m.accounts = !!allowed;
-  return writeMembers(current);
-}
-
 async function resetDevice(email) {
   const current = await readMembers({ fresh: true });
   const m = current.find((x) => x.email === email);
@@ -132,7 +122,6 @@ module.exports = {
   roleOf,
   checkAndBindDevice,
   resetDevice,
-  setAccounts,
   normalizeMembers,
   __setBlobForTests
 };

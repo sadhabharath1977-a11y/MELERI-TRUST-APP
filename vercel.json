@@ -42,7 +42,7 @@
       "headers": [
         {
           "key": "Cache-Control",
-          "value": "public, max-age=31536000, immutable"
+          "value": "public, max-age=86400"
         }
       ]
     },
@@ -65,15 +65,6 @@
         {
           "key": "Service-Worker-Allowed",
           "value": "/"
-        }
-      ]
-    },
-    {
-      "source": "/maharishi.jpg",
-      "headers": [
-        {
-          "key": "Cache-Control",
-          "value": "public, max-age=604800"
         }
       ]
     }

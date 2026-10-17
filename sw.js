@@ -1,18 +1,17 @@
 // Service worker.
-// Strategy (v33): app shell (HTML/JS/CSS) = CACHE-FIRST + silent background refresh (stale-while-revalidate).
-// The app therefore opens instantly even on a weak network. When the background refresh finds that a file
-// really changed on the server, the page is told (postMessage) and shows an "Update" button - the app never
-// reloads by itself in the middle of typing. No version to bump for normal uploads.
+// Strategy: app shell (HTML/JS/CSS) = NETWORK-FIRST with a 3.5 s timeout and the cached copy as the
+// fallback (so a new upload to GitHub is always picked up on the next open - no version to bump, no
+// mixed old/new files; slow or missing network still starts from cache);
 // photos & icons = cache-first (their file names are content hashes); fonts = stale-while-revalidate;
 // /api/* is NEVER cached (login and member data must always come live from the server).
-const VERSION = "v37";
+const VERSION = "v24";
 const SHELL_CACHE = "meleri-shell-" + VERSION;
 const IMG_CACHE = "meleri-img-" + VERSION;
 const FONT_CACHE = "meleri-fonts-v1";
 const KEEP = [SHELL_CACHE, IMG_CACHE, FONT_CACHE];
 
 const SHELL = [
-  "/style.css", "/manifest.json", "/maharishi.jpg",
+  "/style.css", "/manifest.json",
   "/js/main.js", "/js/util.js", "/js/i18n.js", "/js/api.js", "/js/auth.js", "/js/views.js", "/js/stats.js", "/js/seva.js",
   "/icons/icon-192.png"
 ];
@@ -39,22 +38,12 @@ self.addEventListener("activate", (event) => {
   );
 });
 
-const sig = (r) => r.headers.get("etag") || r.headers.get("content-length") || "";
-async function tellClients() {
-  const all = await self.clients.matchAll({ type: "window" });
-  all.forEach((c) => c.postMessage({ type: "updated" }));
-}
-
-// cached copy at once; refresh in the background; tell the page only when the file really changed
-async function staleWhileRevalidate(event, cacheName, key, notify) {
+async function staleWhileRevalidate(event, cacheName, key) {
   const cache = await caches.open(cacheName);
   const cached = await cache.match(key);
   const network = fetch(event.request)
-    .then(async (res) => {
-      if (res && (res.status === 200 || res.type === "opaque")) {
-        if (cached && notify && res.status === 200 && sig(cached) && sig(res) && sig(cached) !== sig(res)) tellClients();
-        await cache.put(key, res.clone()); // never cache errors
-      }
+    .then((res) => {
+      if (res && (res.status === 200 || res.type === "opaque")) cache.put(key, res.clone()); // never cache errors
       return res;
     })
     .catch(() => null);
@@ -63,6 +52,31 @@ async function staleWhileRevalidate(event, cacheName, key, notify) {
     return cached;
   }
   return (await network) || Response.error();
+}
+
+async function networkFirst(event, cacheName, key) {
+  const cache = await caches.open(cacheName);
+  const cached = await cache.match(key);
+  const network = fetch(event.request).then((res) => {
+    if (res && res.status === 200) cache.put(key, res.clone()); // never cache errors
+    return res;
+  });
+  if (!cached) {
+    try {
+      return await network;
+    } catch (e) {
+      return Response.error();
+    }
+  }
+  const timeout = new Promise((resolve) => setTimeout(() => resolve(null), 3500));
+  try {
+    const res = await Promise.race([network, timeout]);
+    if (res && res.status < 500) return res;
+  } catch (e) {
+    // offline: fall through to the cached copy
+  }
+  event.waitUntil(network.catch(() => {})); // let a slow request finish and refresh the cache
+  return cached;
 }
 
 async function cacheFirst(cacheName, request) {
@@ -86,14 +100,14 @@ self.addEventListener("fetch", (event) => {
       return;
     }
     if (req.mode === "navigate") {
-      event.respondWith(staleWhileRevalidate(event, SHELL_CACHE, "/index.html", true));
+      event.respondWith(networkFirst(event, SHELL_CACHE, "/index.html"));
       return;
     }
-    event.respondWith(staleWhileRevalidate(event, SHELL_CACHE, req, true));
+    event.respondWith(networkFirst(event, SHELL_CACHE, req));
     return;
   }
   if (url.hostname === "fonts.googleapis.com" || url.hostname === "fonts.gstatic.com") {
-    event.respondWith(staleWhileRevalidate(event, FONT_CACHE, req, false));
+    event.respondWith(staleWhileRevalidate(event, FONT_CACHE, req));
   }
   // anything else (accounts.google.com ...) is left to the browser
 });
