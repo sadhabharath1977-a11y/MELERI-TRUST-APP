@@ -33,7 +33,20 @@ export function renderSite(site, role, entryAllowed) {
       : '<div class="row"><div class="ico">🔒</div><div><b>' + esc(t("அணுகல் இல்லை", "No access")) + "</b><small>" +
         esc(t("Write, Edit, Google Form, Google Sheets Autopilot பயிற்சி வேண்டும்", "Write, Edit, Google Form, Google Sheets Autopilot training is required")) + "</small></div></div>"
   );
-  put("#phoneList", site.phones.map((p) => row({ href: "tel:+" + digits(p.tel), icon: "📞", title: pick(p), sub: p.show })).join(""));
+  // each number: name + number on the left, round Call and WhatsApp buttons side by side on the right
+  put(
+    "#phoneList",
+    site.phones
+      .map((p) => {
+        const d = digits(p.tel);
+        return (
+          '<div class="row phone-row"><div class="ico">📞</div><div><b>' + esc(pick(p)) + "</b><small>" + esc(p.show) + '</small></div><div class="ph-btns">' +
+          '<a class="ph-btn" href="tel:+' + esc(d) + '" aria-label="' + esc(t("அழை", "Call")) + '">📞</a>' +
+          '<a class="ph-btn wa" href="https://wa.me/' + esc(d) + '"' + EXT + ' aria-label="WhatsApp">💬</a></div></div>'
+        );
+      })
+      .join("")
+  );
   put("#emailList", site.emails.map((m) => row({ href: "mailto:" + m.mail, icon: "📧", title: pick(m), sub: m.mail })).join(""));
   put("#linkList", site.links.map(linkRow).join(""));
   const isMaster = role === "master";
