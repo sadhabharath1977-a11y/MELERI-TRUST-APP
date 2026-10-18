@@ -182,7 +182,7 @@ function testTrustees() {
 }
 
 // ====================== செலுத்துதல் (Pay & Send Details) tab ======================
-// Tab "செலுத்துதல்" columns:  A தலைப்பு | B இமெயில் ID | C UPI ID | D காட்டு (ஆம்/இல்லை)
+// Tab "செலுத்துதல்" columns:  A தலைப்பு | B இமெயில் ID | C UPI ID | D காட்டு (ஆம்/இல்லை) | E செல் எண்
 // Row order = order shown in the app. D = "இல்லை" hides that row. Empty D = shown.
 // Changes show in the app within about 5 minutes.
 const PAY_TAB = 'செலுத்துதல்';
@@ -193,10 +193,10 @@ function pay_() {
     const n = sh.getLastRow() - 1;
     if (n < 1) return [];
     const out = [];
-    sh.getRange(2, 1, n, 4).getValues().forEach(r => {
+    sh.getRange(2, 1, n, 5).getValues().forEach(r => {
       const title = String(r[0]).trim();
       if (!title || String(r[3]).trim() === 'இல்லை') return;
-      out.push({ title: title, email: String(r[1]).trim(), upi: String(r[2]).trim() });
+      out.push({ title: title, email: String(r[1]).trim(), upi: String(r[2]).trim(), phone: String(r[4]).trim() });
     });
     return out;
   });

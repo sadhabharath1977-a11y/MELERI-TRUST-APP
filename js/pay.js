@@ -9,6 +9,7 @@ let failed = false;
 let at = 0;
 
 const EMAIL_RE = /^[A-Za-z0-9._%+-]{1,64}@[A-Za-z0-9.-]{1,190}\.[A-Za-z]{2,24}$/;
+const PHONE_RE = /^91\d{10}$/;
 const UPI_RE = /^[A-Za-z0-9._-]{2,64}@[A-Za-z][A-Za-z0-9.-]{1,40}$/;
 
 export function clearPay() {
@@ -37,17 +38,21 @@ export async function loadPay(quiet) {
 function card(i) {
   const email = EMAIL_RE.test(i.email || "") ? i.email : "";
   const upi = UPI_RE.test(i.upi || "") ? i.upi : "";
+  const phone = PHONE_RE.test(i.phone || "") ? i.phone : "";
   // UPI deep link: the Tamil title is not sent as the payee name (some UPI apps reject non-English names).
   const pn = /^[\x20-\x7E]+$/.test(i.title) ? "&pn=" + encodeURIComponent(i.title) : "";
   let h = '<div class="pay-card"><b>' + esc(i.title) + "</b>";
   if (email) h += '<div class="pay-id">✉ ' + esc(email) + "</div>";
   if (upi) h += '<div class="pay-id">₹ ' + esc(upi) + "</div>";
+  if (phone) h += '<div class="pay-id">📞 ' + esc(phone.slice(2, 7) + " " + phone.slice(7)) + "</div>";
   h += '<div class="pay-btns">';
   if (email) h += '<a class="pay-btn" href="mailto:' + esc(email) + "?subject=" + esc(encodeURIComponent(i.title)) + '">✉ ' + esc(t("விவரம் அனுப்பு", "Send details")) + "</a>";
   if (upi) {
     h += '<a class="pay-btn upi" href="upi://pay?pa=' + esc(upi) + pn + '&cu=INR">₹ ' + esc(t("UPI செலுத்து", "Pay by UPI")) + "</a>";
     h += '<button class="pay-btn copy" type="button" data-copy="' + esc(upi) + '" aria-label="' + esc(t("UPI ID நகலெடு", "Copy UPI ID")) + '">⧉ ' + esc(t("நகலெடு", "Copy")) + "</button>";
   }
+  // the call button sits on the right of "Copy"
+  if (phone) h += '<a class="pay-btn copy" href="tel:+' + esc(phone) + '">📞 ' + esc(t("அழை", "Call")) + "</a>";
   return h + "</div></div>";
 }
 
