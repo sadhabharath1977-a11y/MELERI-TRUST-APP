@@ -434,3 +434,11 @@ select:active{transform:scale(.99)}
 .pay-btn.upi{background:var(--green-700);border-color:var(--green-700);color:#fff}
 .pay-btn.copy{flex:0 0 auto;min-width:0}
 .pay-btn:active{transform:scale(.97)}
+
+/* ===== Contacts page: Call + WhatsApp side by side ===== */
+.phone-row{cursor:default}
+.phone-row:active{transform:none;background:inherit}
+.ph-btns{display:flex;gap:8px;margin-left:auto;flex:none}
+.ph-btn{width:42px;height:42px;border-radius:50%;display:grid;place-items:center;font-size:19px;text-decoration:none;background:var(--green-100);border:1px solid var(--green-600)}
+.ph-btn.wa{background:#e7f8ee;border-color:#25d366}
+.ph-btn:active{transform:scale(.92)}
