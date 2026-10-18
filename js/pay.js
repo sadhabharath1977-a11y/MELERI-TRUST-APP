@@ -51,8 +51,11 @@ function card(i) {
     h += '<a class="pay-btn upi" href="upi://pay?pa=' + esc(upi) + pn + '&cu=INR">₹ ' + esc(t("UPI செலுத்து", "Pay by UPI")) + "</a>";
     h += '<button class="pay-btn copy" type="button" data-copy="' + esc(upi) + '" aria-label="' + esc(t("UPI ID நகலெடு", "Copy UPI ID")) + '">⧉ ' + esc(t("நகலெடு", "Copy")) + "</button>";
   }
-  // the call button sits on the right of "Copy"
-  if (phone) h += '<a class="pay-btn copy" href="tel:+' + esc(phone) + '">📞 ' + esc(t("அழை", "Call")) + "</a>";
+  // Call and WhatsApp sit on the right of "Copy" (both use the number in column E)
+  if (phone) {
+    h += '<a class="pay-btn copy" href="tel:+' + esc(phone) + '">📞 ' + esc(t("அழை", "Call")) + "</a>";
+    h += '<a class="pay-btn copy wa" href="https://wa.me/' + esc(phone) + '" target="_blank" rel="noopener">💬 WhatsApp</a>';
+  }
   return h + "</div></div>";
 }
 
