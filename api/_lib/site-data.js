@@ -34,22 +34,23 @@ const SITE = {
   phones: [
     { ta: "வேதாத்திரி பதிப்பகம்", en: "Vethathiri Pathippagam", tel: "919994930378", show: "99949 30378" },
     { ta: "TRL ஜோன் EO", en: "TRL Zone EO", tel: "918838074336", show: "88380 74336" },
-    { ta: "WCSC தலைமை அலுவலகம்", en: "WCSC Head Office", tel: "917904402887", show: "79044 02887" },
-    { ta: "அளியார் கோர்ஸ் புக்கிங்", en: "Aliyar Course Booking", tel: "916379282565", show: "63792 82565" },
-    { ta: "அளியார் அலுவலகம்", en: "Aliyar Office", tel: "917598238733", show: "75982 38733" },
+    { ta: "WCSC தலைமை அலுவலகம்", en: "WCSC Head Office", tel: "919445179431", show: "94451 79431" },
+    { ta: "ஆழியார் கோர்ஸ் புக்கிங்", en: "Aliyar Course Booking", tel: "916379282565", show: "63792 82565" },
+    { ta: "ஆழியார் அலுவலகம்", en: "Aliyar Office", tel: "917598238733", show: "75982 38733" },
     { ta: "ஸ்மார்ட் அலுவலகம்", en: "Smart Office", tel: "919488947444", show: "94889 47444" },
     { ta: "விஷன் அலுவலகம்", en: "Vision Office", tel: "919442124234", show: "94421 24234" },
-    { ta: "அளியார் IT அலுவலகம்", en: "Aliyar IT Office", tel: "918903488633", show: "89034 88633" }
+    { ta: "ஆழியார் IT அலுவலகம்", en: "Aliyar IT Office", tel: "918903488633", show: "89034 88633" },
+    { ta: "ஆழியார் ஆன்லைன் கோர்ஸ் புக்கிங்", en: "Aliyar Online Course Booking", tel: "917904402887", show: "79044 02887" }
   ],
 
   emails: [
     { ta: "திருவள்ளூர் ஜோன்", en: "Thiruvallur Zone", mail: "wcscthiruvallurzone@vethathiri.ac.in" },
-    { ta: "அளியார் அலுவலகம்", en: "Aliyar Office", mail: "aoaliyar@vethathiri.ac.in" },
-    { ta: "விஷன் அளியார்", en: "Vision Aliyar", mail: "visionacademy@vethathiri.ac.in" }
+    { ta: "ஆழியார் அலுவலகம்", en: "Aliyar Office", mail: "aoaliyar@vethathiri.ac.in" },
+    { ta: "விஷன் ஆழியார்", en: "Vision Aliyar", mail: "visionacademy@vethathiri.ac.in" }
   ],
 
   links: [
-    { icon: "📅", ta: "Year Planner - அறிவுத் திருக்கோயில், அளியார்", en: "Year Planner - Arivuthirukoil, Aliyar", sub: "Open Page", url: "https://manuals.plus/m/85430e3dd5dce35db29e00d5082bba1f204678f82d55c7ef9305a1ed49f43ec9" },
+    { icon: "📅", ta: "Year Planner - அறிவுத் திருக்கோயில், ஆழியார்", en: "Year Planner - Arivuthirukoil, Aliyar", sub: "Open Page", url: "https://manuals.plus/m/85430e3dd5dce35db29e00d5082bba1f204678f82d55c7ef9305a1ed49f43ec9" },
     { icon: "📄", ta: "ஸ்மார்ட் படிவங்கள்", en: "Smart Forms", sub: "Open Page", url: "https://www.vethathiri.edu.in/pages/forms" }
   ],
 
