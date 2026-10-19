@@ -93,6 +93,7 @@ async function writeMembers(members) {
 // login endpoint so a login needs only one Blob read+write instead of two.
 // Returns { ok: true, role } if this device is now (or already was) the bound one,
 // { ok: false, other: true, role } if a DIFFERENT device already holds the lock,
+// { ok: false, deviceUsed: true } if THIS device is already locked to a different e-mail (one phone = one account),
 // or { ok: false, other: false, role: null } if the email is not a member at all.
 async function checkAndBindDevice(email, deviceId) {
   const current = await readMembers({ fresh: true });
@@ -100,6 +101,10 @@ async function checkAndBindDevice(email, deviceId) {
   if (!m) return { ok: false, other: false, role: null };
   if (m.deviceId && m.deviceId !== deviceId) return { ok: false, other: true, role: m.role };
   if (m.deviceId !== deviceId) {
+    // One phone = one account: this phone is already locked to a DIFFERENT e-mail, so it cannot take a second one.
+    // (An e-mail that is already bound to this phone is never affected, so nobody is locked out by this rule.)
+    const holder = current.find((x) => x.email !== email && x.deviceId === deviceId);
+    if (holder) return { ok: false, other: false, deviceUsed: true, holder: holder.email, role: m.role };
     m.deviceId = deviceId;
     await writeMembers(current);
   }

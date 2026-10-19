@@ -6,8 +6,9 @@
 // Previously the app made 2-3 separate calls (verify-access, trustees, admin-emails), each of which
 // re-verified the token with Google and re-read the Blob store.
 //
-// One-device rule: each non-admin email is locked to the first device it logs in from (its device
-// cookie). A login attempt from a second device is rejected with 409 until an admin resets it.
+// One-device rule (both ways): each non-admin email is locked to the first device it logs in from (its device
+// cookie), and a device that is locked to one e-mail refuses every other e-mail (one phone = one account).
+// A login attempt that breaks either rule is rejected with 409 until an admin resets the lock.
 const { ADMIN_EMAIL } = require("./_lib/config");
 const { verifyGoogleToken } = require("./_lib/googleAuth");
 const { authenticate } = require("./_lib/auth");
@@ -60,6 +61,10 @@ module.exports = async (req, res) => {
       const deviceId = existingDeviceId || newDeviceId();
       const bind = await checkAndBindDevice(email, deviceId);
       if (!bind.ok) {
+        if (bind.deviceUsed) {
+          console.log(JSON.stringify({ audit: "device-used-by-other", email, holder: bind.holder }));
+          return send(res, 409, { allowed: false, error: "device-used", email });
+        }
         if (bind.other) {
           console.log(JSON.stringify({ audit: "device-locked-out", email }));
           return send(res, 409, { allowed: false, error: "device-locked", email });

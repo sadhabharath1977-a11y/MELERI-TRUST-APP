@@ -141,6 +141,21 @@ test("removing someone from the list locks them out even with a valid cookie", a
   store.__setBlobForTests(blob); // drops the 60s cache, as a new server instance would
   assert.equal((await call(sessionApi, "GET", { headers: { cookie } })).statusCode, 401);
 });
+test("one phone = one account: a second e-mail on the same phone is refused; another phone and an admin reset still work", async () => {
+  blob.store.data = JSON.stringify(["a@example.com", "b@example.com", "c@example.com"]);
+  const a = await login("a@example.com"); // phone 1 is now locked to a
+  assert.equal(a.res.statusCode, 200);
+  const onPhone1 = (email) => call(sessionApi, "POST", { headers: { ...H.CSRF, cookie: a.cookie }, body: { idToken: H.mintIdToken({ email }) } });
+  const b1 = await onPhone1("b@example.com"); // same phone, other e-mail
+  assert.equal(b1.statusCode, 409);
+  assert.equal(b1.body.error, "device-used");
+  assert.equal(b1.headers["set-cookie"], undefined);
+  assert.equal((await onPhone1("a@example.com")).statusCode, 200); // a itself is never affected
+  assert.equal((await login("b@example.com")).res.statusCode, 200); // b on its own phone is fine
+  await store.resetDevice("a@example.com"); // admin presses the unlock button for a
+  assert.equal((await onPhone1("c@example.com")).statusCode, 200); // phone 1 is free again, c takes it
+  assert.equal((await onPhone1("a@example.com")).statusCode, 409); // and a can no longer use phone 1
+});
 test("logout clears the cookie", async () => {
   const r = await call(sessionApi, "DELETE", { headers: H.CSRF });
   assert.equal(r.statusCode, 200);
